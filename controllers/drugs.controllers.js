@@ -15,32 +15,7 @@ module.exports = {
             });
         });
     },
-    deleteDrugs(req, res) {
 
-        let jsonArr = [];
-        let jsonErrArr = [];
-        let errFlag = false;
-
-        Drug.findAll().then((drugs) => {
-
-            for (const resObj of drugs) {
-                resObj.destroy().then(drug => {
-                    jsonArr.push({...drug});
-                }).catch(err => {
-                    errFlag = true;
-                    jsonErrArr.push({...err});
-                });
-            }
-
-            res.json(!errFlag ? jsonArr : jsonErrArr);
-
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error!",
-                err
-            });
-        });
-    },
     postDrugs(req, res) {
         const {
             name,
@@ -87,15 +62,43 @@ module.exports = {
                 packSizeCost: packSizeCost,
                 expiryDate: expiryDate,
                 quantity: 0,
-            }).then(drug => {
+            }).then((drug) => {
                 return drug.save();
-            }).then(drug => res.json(drug))
-                .catch(err => res.json({
+            }).then((drug) => res.json(drug))
+                .catch((err) => res.json({
                     errMsg: "Error!",
                     err,
                 }));
 
         }
 
-    }
+    },
+
+    deleteDrugs(req, res) {
+
+        let jsonArr = [];
+        let jsonErrArr = [];
+        let errFlag = false;
+
+        Drug.findAll().then((drugs) => {
+
+            drugs.forEach((drug) => {
+                drug.destroy().then((drug) => {
+                    console.log("drug => ", drug);
+                    jsonArr.push({...drug});
+                }).catch(err => {
+                    errFlag = true;
+                    jsonErrArr.push({...err});
+                });
+            });
+
+            res.json(!errFlag ? jsonArr : jsonErrArr);
+
+        }).catch((err) => {
+            res.json({
+                errMsg: "Error!",
+                err
+            });
+        });
+    },
 };

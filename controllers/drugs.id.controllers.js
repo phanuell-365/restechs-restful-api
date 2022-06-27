@@ -22,7 +22,7 @@ module.exports = {
 
         const drugId = req.params.id;
 
-        Drug.findByPk(drugId).then(drug => {
+        Drug.findByPk(drugId).then((drug) => {
 
             const {
                 name,
@@ -70,18 +70,23 @@ module.exports = {
                     packSizeCost: packSizeCost,
                     expiryDate: expiryDate,
                     quantity: 0,
-                }).then(drug => {
+                }).then((drug) => {
                     return drug.save();
 
-                }).then(drug => {
+                }).then((drug) => {
                     res.json(drug);
-                }).catch(err => {
+                }).catch((err) => {
                     res.json({
                         errMsg: "Error!",
                         err
                     });
                 });
             }
+        }).catch((err) => {
+            res.json({
+                errMsg: "Error!",
+                err
+            });
         });
     },
 
@@ -92,13 +97,15 @@ module.exports = {
 
         // console.log(req.body);
 
-        Drug.findByPk(drugId).then(drug => {
+        Drug.findByPk(drugId).then((drug) => {
             // console.log(drug.toJSON());
             return drug.update(drugContent);
-        }).then(drug => {
+        }).then((drug) => {
             // console.log(drug);
+            return drug;
+        }).then((drug) => {
             res.json(drug);
-        }).catch(err => {
+        }).catch((err) => {
             // console.log("Error Occurred");
             res.json({
                 errMsg: "Error!",
@@ -111,17 +118,16 @@ module.exports = {
 
         const drugId = req.params.id;
 
-        Drug.findByPk(drugId).then(drug => {
+        Drug.findByPk(drugId).then((drug) => {
             return drug.destroy();
-        }).then(drug => {
-
+        }).then((drug) => {
             return drug;
-        }).then(drug => {
+        }).then((drug) => {
             res.json({
                 msg: "The record was deleted successfully!",
                 drug,
             });
-        }).catch(err => {
+        }).catch((err) => {
             res.json({
                 errMsg: "Error! Failed to delete the record",
                 err
