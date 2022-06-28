@@ -22,9 +22,9 @@ module.exports = {
 
     postSales(req, res) {
 
-        const {quantity, price, DrugId} = req.body;
+        const {quantity, DrugId} = req.body;
 
-        if (!quantity || !price || !DrugId) {
+        if (!quantity || !DrugId) {
             res.json({
                 errMsg: "Error! Not all fields were fed",
                 body: req.body,
@@ -36,7 +36,7 @@ module.exports = {
 
                 return drug.createSale({
                     quantity,
-                    price,
+                    price: drug.issueUnitPrice,
                     total: totalVal,
                 });
             }).then((sale) => {
