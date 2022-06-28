@@ -25,6 +25,7 @@ const suppliersRoutes = require("./routes/suppliers.routes");
 const suppliersIdRoutes = require("./routes/suppliers.id.routes");
 const ordersRoutes = require("./routes/orders.routes");
 const ordersIdRoutes = require("./routes/orders.id.routes");
+const salesRoutes = require("./routes/sales.routes");
 
 app.use(bodyParser.urlencoded({extended: true}));
 
@@ -37,6 +38,7 @@ app.use(suppliersRoutes);
 app.use(suppliersIdRoutes);
 app.use(ordersRoutes);
 app.use(ordersIdRoutes);
+app.use(salesRoutes);
 
 // define the relationship between the models
 

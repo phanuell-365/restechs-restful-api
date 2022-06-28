@@ -4,7 +4,7 @@
 
 const Order = require("../models/orders.model");
 const Supplier = require("../models/suppliers.model");
-const {calcOrderValue, calcDrugQuantity} = require("../src/orders.controllers.src");
+const {calcOrderValue, calcDrugQuantity} = require("../src/orders.src");
 
 module.exports = {
 
@@ -42,10 +42,10 @@ module.exports = {
                     value: await calcOrderValue(quantity, DrugId),
                     DrugId: DrugId,
                 });
-            }).then((supplier) => {
+            }).then((order) => {
                 res.json({
-                    msg: "Successfully created an order.",
-                    supplier,
+                    msg: "Successfully createdd an order.",
+                    order,
                 });
             }).catch((err) => {
                 res.json({

@@ -32,11 +32,15 @@ module.exports = {
 
         Drug.findByPk(drugId).then((drug) => {
             let drgQuantity = orderQuantity * drug.issueUnitPerPackSize;
+
             const currentDrugQuantity = drug.quantity;
+
             drgQuantity += currentDrugQuantity;
+
             return drug.update({quantity: drgQuantity});
-        }).then((drug) => {
-            console.log("The drug was successfully updated", drug.toJSON());
+
+        }).then(() => {
+            console.log("The drug was successfully updated");
         }).catch((err) => {
             console.log(err);
         });

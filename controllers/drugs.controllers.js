@@ -76,23 +76,29 @@ module.exports = {
 
     deleteDrugs(req, res) {
 
-        let jsonArr = [];
-        let jsonErrArr = [];
-        let errFlag = false;
-
         Drug.findAll().then((drugs) => {
 
+            const destroyedDrugs = [];
+
             drugs.forEach((drug) => {
+
                 drug.destroy().then((drug) => {
-                    console.log("drug => ", drug);
-                    jsonArr.push({...drug});
+
+                    destroyedDrugs.push({...drug});
+
                 }).catch(err => {
-                    errFlag = true;
-                    jsonErrArr.push({...err});
+
+                    res.json({
+                        errMsg: "Error! Failed to delete the drug.",
+                        err,
+                    });
                 });
             });
 
-            res.json(!errFlag ? jsonArr : jsonErrArr);
+            res.json({
+                msg: "Successfully deleted all the drugs",
+                destroyedDrugs,
+            });
 
         }).catch((err) => {
             res.json({
