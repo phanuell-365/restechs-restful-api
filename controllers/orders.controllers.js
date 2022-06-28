@@ -21,26 +21,26 @@ module.exports = {
 
     postOrders(req, res) {
 
-        const {status, quantity, supplierId, drugId} = req.body;
+        const {status, quantity, SupplierId, DrugId} = req.body;
 
-        if (!status || !quantity || !supplierId || !drugId) {
+        if (!status || !quantity || !SupplierId || !DrugId) {
             res.json({
                 errMsg: "Error! Not all fields were fed.",
                 body: req.body,
             });
         } else {
 
-            Supplier.findByPk(supplierId).then(async (supplier) => {
+            Supplier.findByPk(SupplierId).then(async (supplier) => {
                 // calculate the quantity of the drug delivered and update the drug info
-                calcDrugQuantity(quantity, drugId);
+                calcDrugQuantity(quantity, DrugId);
 
 
                 // create a new order while calculating its order value.
                 return supplier.createOrder({
                     status,
                     quantity,
-                    value: await calcOrderValue(quantity, drugId),
-                    DrugId: drugId,
+                    value: await calcOrderValue(quantity, DrugId),
+                    DrugId: DrugId,
                 });
             }).then((supplier) => {
                 res.json({

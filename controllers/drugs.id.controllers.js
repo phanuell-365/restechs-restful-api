@@ -92,12 +92,12 @@ module.exports = {
 
     patchDrugsId(req, res) {
 
-        const drugId = req.params.id;
+        const DrugId = req.params.id;
         const drugContent = req.body;
 
         // console.log(req.body);
 
-        Drug.findByPk(drugId).then((drug) => {
+        Drug.findByPk(DrugId).then((drug) => {
             // console.log(drug.toJSON());
             return drug.update(drugContent);
         }).then((drug) => {
