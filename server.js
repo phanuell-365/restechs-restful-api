@@ -15,6 +15,7 @@ const sequelize = require("./config/config.db");
 const Drug = require("./models/drugs.model");
 const Supplier = require("./models/suppliers.model");
 const Order = require("./models/orders.model");
+const Delivery = require("./models/delivery.model");
 const Sale = require("./models/sales.model");
 
 // require routes
@@ -44,16 +45,18 @@ app.use(salesIdRoutes);
 
 // define the relationship between the models
 
-Drug.hasOne(Order, {constraints: true, onDelete: "CASCADE"});
+Drug.hasMany(Order, {constraints: true, onDelete: "CASCADE"});
 Order.belongsTo(Drug);
 Supplier.hasMany(Order, {constraints: true, onDelete: "CASCADE"});
 Order.belongsTo(Supplier);
-Drug.hasOne(Sale, {constraints: true, onDelete: "CASCADE"});
+Drug.hasMany(Sale, {constraints: true, onDelete: "CASCADE"});
 Sale.belongsTo(Drug);
+Order.hasMany(Delivery, {constraints: true, onDelete: "CASCADE"});
+Delivery.belongsTo(Order);
 
 sequelize
-    // .sync({force: true}) // drops all tables, and creates new ones
-    .sync()
+    .sync({force: true}) // drops all tables, and creates new ones
+    // .sync()
     .then(() => {
         // console.log(result);
         app.listen(port, () =>

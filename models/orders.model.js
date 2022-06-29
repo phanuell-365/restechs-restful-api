@@ -15,18 +15,25 @@ Order.init({
         allowNull: false,
         primaryKey: true,
     },
+
+    // for example a pack size could be a box, bottle ...
+    packSize : {
+        type : Sequelize.STRING,
+        allowNull : false,
+    },
+
+    // for example, how many drug boxes are being ordered?
+    packSizeQuantity: {
+        type: Sequelize.INTEGER,
+        allowNull: false,
+    },
+    // this could either be pending, partial, delivered or cancelled
+    //! This is a calculated field
     status: {
         type: Sequelize.STRING,
         allowNull: false,
     },
-    quantity: {
-        type: Sequelize.INTEGER,
-        allowNull: false,
-    },
-    value: {
-        type: Sequelize.DOUBLE,
-        allowNull: false,
-    },
+
 }, {
     sequelize,
     modelName: "Order"
