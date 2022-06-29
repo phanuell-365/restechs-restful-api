@@ -30,6 +30,7 @@ const salesRoutes = require("./routes/sales/sales.routes");
 const salesIdRoutes = require("./routes/sales/sales.id.routes");
 
 app.use(bodyParser.urlencoded({extended: true}));
+app.use(express.json());
 
 
 // use routes
@@ -55,8 +56,8 @@ Order.hasMany(Delivery, {constraints: true, onDelete: "CASCADE"});
 Delivery.belongsTo(Order);
 
 sequelize
-    .sync({force: true}) // drops all tables, and creates new ones
-    // .sync()
+    // .sync({force: true}) // drops all tables, and creates new ones
+    .sync()
     .then(() => {
         // console.log(result);
         app.listen(port, () =>

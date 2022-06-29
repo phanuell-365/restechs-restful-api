@@ -3,7 +3,6 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-// const {where} = require("sequelize/types");
 
 module.exports = {
     getDrugsId(req, res) {
@@ -18,6 +17,7 @@ module.exports = {
             });
         });
     },
+
     putDrugsId(req, res) {
 
         const drugId = req.params.id;
@@ -32,9 +32,6 @@ module.exports = {
                 therapeuticCategory,
                 issueUnit,
                 issueUnitPrice,
-                issueUnitPerPackSize,
-                packSize,
-                packSizeCost,
                 expiryDate,
             } = req.body;
 
@@ -46,29 +43,30 @@ module.exports = {
                 !therapeuticCategory ||
                 !issueUnit ||
                 !issueUnitPrice ||
-                !issueUnitPerPackSize ||
-                !packSize ||
-                !packSizeCost ||
                 !expiryDate
             ) {
                 res.json({
                     body: req.body,
                     msg: "Error not all fields have been fed!!",
                 });
+            }
+
+            // the drug quantity is a calculated field, hence it shouldn't be fetched.
+            else if (req.body.quantity) {
+                res.json({
+                    errMsg: "Error! Cannot update the quantity of a drug",
+                });
             } else {
 
                 drug.update({
-                    name: name,
-                    doseForm: doseForm,
-                    strength: strength,
-                    levelOfUse: levelOfUse,
-                    therapeuticCategory: therapeuticCategory,
-                    issueUnit: issueUnit,
-                    issueUnitPrice: issueUnitPrice,
-                    issueUnitPerPackSize: issueUnitPerPackSize,
-                    packSize: packSize,
-                    packSizeCost: packSizeCost,
-                    expiryDate: expiryDate,
+                    name,
+                    doseForm,
+                    strength,
+                    levelOfUse,
+                    therapeuticCategory,
+                    issueUnit,
+                    issueUnitPrice,
+                    expiryDate,
                     quantity: 0,
                 }).then((drug) => {
                     return drug.save();
@@ -95,10 +93,15 @@ module.exports = {
         const DrugId = req.params.id;
         const drugContent = req.body;
 
-        // console.log(req.body);
 
         Drug.findByPk(DrugId).then((drug) => {
-            // console.log(drug.toJSON());
+
+            // the drug quantity is a calculated field, hence it shouldn't be fetched.
+            if (req.body.quantity) {
+                res.json({
+                    errMsg: "Error! Cannot update the quantity of a drug",
+                });
+            }
             return drug.update(drugContent);
         }).then((drug) => {
             // console.log(drug);
