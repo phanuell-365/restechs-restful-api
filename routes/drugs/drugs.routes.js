@@ -2,7 +2,7 @@
 
 const router = require("express").Router();
 
-const {getDrugs, deleteDrugs, postDrugs} = require("../controllers/drugs.controllers");
+const {getDrugs, deleteDrugs, postDrugs} = require("../../controllers/drugs/drugs.controllers");
 
 router.get("/drugs", getDrugs);
 router.delete("/drugs", deleteDrugs);

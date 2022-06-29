@@ -2,9 +2,9 @@
 
 "use strict";
 
-const Sale = require("../models/sales.model");
-const Drug = require("../models/drugs.model");
-const {updateDrugQuantity, calcTotalPrice} = require("../src/sales.src");
+const Sale = require("../../models/sales.model");
+const Drug = require("../../models/drugs.model");
+const {updateDrugQuantity, calcTotalPrice} = require("../../src/sales/sales.src");
 
 module.exports = {
 

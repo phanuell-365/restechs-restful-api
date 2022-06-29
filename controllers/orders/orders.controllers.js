@@ -2,9 +2,9 @@
 
 "use strict";
 
-const Order = require("../models/orders.model");
-const Supplier = require("../models/suppliers.model");
-const {calcOrderValue, calcDrugQuantity} = require("../src/orders.src");
+const Order = require("../../models/orders.model");
+const Supplier = require("../../models/suppliers.model");
+const {calcOrderValue, calcDrugQuantity} = require("../../src/orders/orders.src");
 
 module.exports = {
 

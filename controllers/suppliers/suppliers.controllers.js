@@ -2,7 +2,7 @@
 
 "use strict";
 
-const Supplier = require("../models/suppliers.model");
+const Supplier = require("../../models/suppliers.model");
 
 module.exports = {
     getSuppliers(req, res) {

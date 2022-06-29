@@ -2,7 +2,7 @@
 
 "use strict";
 
-const Drug = require("../models/drugs.model");
+const Drug = require("../../models/drugs.model");
 
 module.exports = {
     getDrugs(req, res) {

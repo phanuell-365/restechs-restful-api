@@ -4,7 +4,7 @@
 
 const router = require("express").Router();
 
-const {getOrdersId, putOrdersId, patchOrderId, deleteOrdersId} = require("../controllers/orders.id.controllers");
+const {getOrdersId, putOrdersId, patchOrderId, deleteOrdersId} = require("../../controllers/orders/orders.id.controllers");
 
 router.get("/orders/:id", getOrdersId);
 router.put("/orders/:id", putOrdersId);

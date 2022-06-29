@@ -2,9 +2,9 @@
 
 "use strict";
 
-const Sale = require("../models/sales.model");
-const {calcTotalPrice} = require("../src/sales.src");
-const {calcSellingPrice} = require("../src/sales.id.src");
+const Sale = require("../../models/sales.model");
+const {calcTotalPrice} = require("../../src/sales/sales.src");
+const {calcSellingPrice} = require("../../src/sales/sales.id.src");
 
 module.exports = {
 

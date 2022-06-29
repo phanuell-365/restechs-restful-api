@@ -19,14 +19,14 @@ const Sale = require("./models/sales.model");
 
 // require routes
 
-const drugsRoutes = require("./routes/drugs.routes");
-const drugsIdRoutes = require("./routes/drugs.id.routes");
-const suppliersRoutes = require("./routes/suppliers.routes");
-const suppliersIdRoutes = require("./routes/suppliers.id.routes");
-const ordersRoutes = require("./routes/orders.routes");
-const ordersIdRoutes = require("./routes/orders.id.routes");
-const salesRoutes = require("./routes/sales.routes");
-const salesIdRoutes = require("./routes/sales.id.routes");
+const drugsRoutes = require("./routes/drugs/drugs.routes");
+const drugsIdRoutes = require("./routes/drugs/drugs.id.routes");
+const suppliersRoutes = require("./routes/suppliers/suppliers.routes");
+const suppliersIdRoutes = require("./routes/suppliers/suppliers.id.routes");
+const ordersRoutes = require("./routes/orders/orders.routes");
+const ordersIdRoutes = require("./routes/orders/orders.id.routes");
+const salesRoutes = require("./routes/sales/sales.routes");
+const salesIdRoutes = require("./routes/sales/sales.id.routes");
 
 app.use(bodyParser.urlencoded({extended: true}));
 

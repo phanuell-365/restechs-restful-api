@@ -4,7 +4,7 @@
 
 const router = require("express").Router();
 
-const {getDrugsId, putDrugsId, patchDrugsId, deleteDrugsId} = require("../controllers/drugs.id.controllers");
+const {getDrugsId, putDrugsId, patchDrugsId, deleteDrugsId} = require("../../controllers/drugs/drugs.id.controllers");
 
 router.get("/drugs/:id", getDrugsId);
 router.put("/drugs/:id", putDrugsId);

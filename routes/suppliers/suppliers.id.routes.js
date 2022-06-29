@@ -9,7 +9,7 @@ const {
     putSuppliersId,
     patchSuppliersId,
     deleteSuppliersId
-} = require("../controllers/suppliers.id.controllers");
+} = require("../../controllers/suppliers/suppliers.id.controllers");
 
 router.get("/suppliers/:id", getSuppliersId);
 router.put("/suppliers/:id", putSuppliersId);

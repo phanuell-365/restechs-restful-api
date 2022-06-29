@@ -4,7 +4,7 @@
 
 const router = require("express").Router();
 
-const {getOrders, postOrders, deleteOrders} = require("../controllers/orders.controllers");
+const {getOrders, postOrders, deleteOrders} = require("../../controllers/orders/orders.controllers");
 
 router.get("/orders", getOrders);
 router.post("/orders", postOrders);
