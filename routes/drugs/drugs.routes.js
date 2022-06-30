@@ -2,10 +2,12 @@
 
 const router = require("express").Router();
 
-const {getDrugs, deleteDrugs, postDrugs} = require("../../controllers/drugs/drugs.controllers");
+// const nodeFetch = require("node-fetch");
 
-router.get("/drugs", getDrugs);
-router.delete("/drugs", deleteDrugs);
-router.post("/drugs", postDrugs);
+const drugs = require("../../controllers/drugs/drugs.controllers");
+
+router.get("/drugs", drugs.get);
+router.delete("/drugs", drugs.delete);
+router.post("/drugs", drugs.post);
 
 module.exports = router;

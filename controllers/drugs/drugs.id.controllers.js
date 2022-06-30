@@ -3,9 +3,12 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
+require("lodash");
+const {validateLevelOfUseAndIssueUnitPrice} = require("../../src/drugs/drugs.src");
 
 module.exports = {
     getDrugsId(req, res) {
+
         const drugId = req.params.id;
 
         Drug.findByPk(drugId).then((drug) => {
@@ -53,10 +56,17 @@ module.exports = {
 
             // the drug quantity is a calculated field, hence it shouldn't be fetched.
             else if (req.body.quantity) {
+
                 res.json({
                     errMsg: "Error! Cannot update the quantity of a drug",
                 });
+
             } else {
+
+                // validateLevelOfUseAndIssueUnitPrice(req.body, res);
+
+                Drug.validateLevelOfUse(req.body, res);
+                Drug.validateIssueUnitPrice(req.body, res);
 
                 drug.update({
                     name,
@@ -95,6 +105,11 @@ module.exports = {
 
 
         Drug.findByPk(DrugId).then((drug) => {
+
+
+            // check to see if the drug is being re entered and if so,
+            // increment the drugs quantity
+            validateLevelOfUseAndIssueUnitPrice(req.body);
 
             // the drug quantity is a calculated field, hence it shouldn't be fetched.
             if (req.body.quantity) {

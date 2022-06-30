@@ -3,27 +3,40 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-const _ = require("lodash");
-const {checkIfDrugExists, incrementDrugQuantity} = require("../../src/drugs/drugs.src");
+require("lodash");
+const {
+    checkIfDrugExists,
+    checkFieldsArePresent,
+    checkIfFieldsAreNull,
+} = require("../../src/drugs/drugs.src");
 
 module.exports = {
 
-    getDrugs(req, res) {
+    /**
+     * @description Handles the get request to the /drugs route
+     * @param req The request object
+     * @param res The response object
+     */
+    get(req, res) {
 
         Drug.findAll().then((drugs) => {
 
-            res.json(drugs);
+            res.status(200).json(drugs);
 
         }).catch((err) => {
-
-            res.json({
-                errMsg: "Error!",
-                err
+            console.log(err);
+            res.status(500).json({
+                description: "Error! Failed to load all the drug data from the database."
             });
         });
     },
 
-    postDrugs(req, res) {
+    /**
+     * @description Handles the post requests to the /drugs route
+     * @param req The request object
+     * @param res The response object
+     */
+    post(req, res) {
 
         const {
             name,
@@ -36,58 +49,56 @@ module.exports = {
             expiryDate,
         } = req.body;
 
-        if (
-            !name ||
-            !doseForm ||
-            !strength ||
-            !levelOfUse ||
-            !therapeuticCategory ||
-            !issueUnit ||
-            !issueUnitPrice ||
-            !expiryDate
-        ) {
-            res.json({
-                body: req.body,
-                msg: "Error not all fields have been fed!!",
-            });
-        }
-        // the drug quantity is a calculated field, hence it shouldn't be fetched.
-        else if (req.body.quantity) {
+        // make an array of required fields
 
-            res.json({
-                errMsg: "Error! Cannot update the quantity of a drug",
-            });
+        const requiredFields = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
+
+        const fieldPresResult = checkFieldsArePresent(requiredFields, req.body);
+
+        const fieldNullResult = checkIfFieldsAreNull(req.body);
+
+        const validateLevelOfUseRes = Drug.validateLevelOfUse(levelOfUse);
+
+        const validateIssUniPriRes = Drug.validateIssueUnitPrice(issueUnitPrice);
+
+        const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(doseForm, issueUnit);
+
+        if (!fieldPresResult.flagStatus) {
+
+            res.status(fieldPresResult.status).json(fieldPresResult);
+
+        } else if (!fieldNullResult.flagStatus) {
+
+            res.status(fieldNullResult.status).json(fieldNullResult);
+
+        } else if (!validateLevelOfUseRes.flagStatus) {
+
+            res.status(validateLevelOfUseRes.status).json(validateLevelOfUseRes);
+
+        } else if (!validateIssUniPriRes.flagStatus) {
+
+            res.status(validateIssUniPriRes.status).json(validateIssUniPriRes);
+
+        } else if (!validateDoseFrmIssUnitRes.flagStatus) {
+
+            res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
 
         } else {
 
-            const intLevelOfUse = _.toInteger(levelOfUse);
-            const doubleIssueUnitPrice = _.toNumber(issueUnitPrice);
-
-            if (intLevelOfUse <= 0) {
-
-                res.json({
-                    errMsg: `The drug level of use cannot be ${intLevelOfUse}`
-                });
-
-            } else if (doubleIssueUnitPrice <= 0) {
-
-                res.json({
-                    errMsg: `The drug issue unit price cannot be ${doubleIssueUnitPrice}`
-                });
-
-            }
-
             // check to see if the drug is being re entered and if so,
-            // increment the drugs quantity
-            checkIfDrugExists(req.body).then((status) => {
+            // then it's an error, since the drug already exists.
+            checkIfDrugExists(req.body).then(async (drugExistsResult) => {
 
-                if (status.found) {
+                if (drugExistsResult.flagStatus) {
 
-                    incrementDrugQuantity(status.drugs);
+                    //! The logic changed
+                    // incrementDrugQuantity(status.drugs);
 
-                    res.json({
-                        msg: "Successfully incremented the quantity of the drugs",
-                    });
+                    // res.json({
+                    //     msg: "Successfully incremented the quantity of the drugs",
+                    // }).status(200);
+
+                    res.status(drugExistsResult.status).json(drugExistsResult);
 
                 } else {
 
@@ -102,18 +113,23 @@ module.exports = {
                         expiryDate,
                         quantity: 0,
                     }).then((drug) => {
+
                         return drug.save();
+
                     }).then((drug) => res.json(drug))
+
                         .catch((err) => res.json({
+
                             errMsg: "Error!",
                             err,
-                        }));
+                        }).status(500));
+
                 }
             });
         }
     },
 
-    deleteDrugs(req, res) {
+    delete(req, res) {
 
         Drug.findAll().then((drugs) => {
 
@@ -130,20 +146,20 @@ module.exports = {
                     res.json({
                         errMsg: "Error! Failed to delete the drug.",
                         err,
-                    });
+                    }).status(500);
                 });
             });
 
             res.json({
                 msg: "Successfully deleted all the drugs",
                 destroyedDrugs,
-            });
+            }).status(200);
 
         }).catch((err) => {
             res.json({
                 errMsg: "Error!",
                 err
-            });
+            }).status(500);
         });
     },
 };
