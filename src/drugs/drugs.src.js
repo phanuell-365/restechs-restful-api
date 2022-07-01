@@ -23,10 +23,10 @@ module.exports = {
         responseArr.sort();
 
         const absentValuesArr = _.difference(requiredArr, responseArr);
-        //
-        // console.log("absentValuesArr", absentValuesArr);
-        // console.log("responseArr", responseArr);
-        // console.log("requiredArr", requiredArr);
+
+        if (!this.trapQuantityAttribute(requestBody).flagStatus) {
+            return this.trapQuantityAttribute(requestBody);
+        }
 
         // if true, it means that some the values weren't passed
         if (absentValuesArr.length !== 0) {
@@ -34,14 +34,6 @@ module.exports = {
             // we need to trap for the quantity attribute of the Drug model
             // it shouldn't be set since it is a computed attribute.
 
-            if (absentValuesArr.every((attribute) => {
-
-                return attribute === "quantity";
-
-            })) {
-                const description = `Error! The field quantity is a computed attribute, thus it should not be set`;
-                return {description, flagStatus: false, status: 400};
-            }
 
             const description = `Error! The field(s) ${absentValuesArr.toString()} are not set`;
 
@@ -251,5 +243,19 @@ module.exports = {
             return retObject;
         }
     },
+
+    trapQuantityAttribute(requestBody) {
+
+        const responseAttrArr = [...Object.keys(requestBody)];
+
+        if (responseAttrArr.includes("quantity")) {
+
+            const description = `Error! The field quantity is a computed attribute, thus it should not be set`;
+            return {description, flagStatus: false, status: 400};
+        } else {
+            const description = "success";
+            return {description, flagStatus: true, status: 200};
+        }
+    }
 
 };

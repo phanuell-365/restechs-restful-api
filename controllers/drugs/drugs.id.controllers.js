@@ -3,8 +3,7 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-require("lodash");
-const {validateLevelOfUseAndIssueUnitPrice} = require("../../src/drugs/drugs.src");
+const sources = require("../../src/drugs/drugs.src");
 
 module.exports = {
     getDrugsId(req, res) {
@@ -12,125 +11,216 @@ module.exports = {
         const drugId = req.params.id;
 
         Drug.findByPk(drugId).then((drug) => {
-            res.json(drug);
+
+            res.status(200).json(drug);
+
         }).catch(err => {
-            res.json({
-                errMsg: "Error!",
-                err
+
+            console.error(err);
+
+            res.status(500).json({
+                errMsg: "Error! Failed to read the drug from the database"
             });
+
         });
     },
 
-    putDrugsId(req, res) {
+    async putDrugsId(req, res) {
 
         const drugId = req.params.id;
 
-        Drug.findByPk(drugId).then((drug) => {
+        const {
+            name,
+            doseForm,
+            strength,
+            levelOfUse,
+            therapeuticCategory,
+            issueUnit,
+            issueUnitPrice,
+            expiryDate,
+        } = req.body;
 
-            const {
-                name,
-                doseForm,
-                strength,
-                levelOfUse,
-                therapeuticCategory,
-                issueUnit,
-                issueUnitPrice,
-                expiryDate,
-            } = req.body;
+        const drug = await Drug.findByPk(drugId);
 
-            if (
-                !name ||
-                !doseForm ||
-                !strength ||
-                !levelOfUse ||
-                !therapeuticCategory ||
-                !issueUnit ||
-                !issueUnitPrice ||
-                !expiryDate
-            ) {
-                res.json({
-                    body: req.body,
-                    msg: "Error not all fields have been fed!!",
+        // make an array of required fields
+
+        const requiredFields = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
+
+        // cache the result of checking if the required fields are present in the request body
+
+        const fieldPresResult = sources.checkFieldsArePresent(requiredFields, req.body);
+
+        // cache the result of checking if all the requested fields are filled
+
+        const fieldNullResult = sources.checkIfFieldsAreNull(req.body);
+
+        // cache the result of validating the level of use of the new drug details
+
+        const validLevelOfUseResult = Drug.validateLevelOfUse(levelOfUse);
+
+        // cache the result of validating the issue unit price of the new drug details
+
+        const validIssueUnitPriceResult = Drug.validateIssueUnitPrice(issueUnitPrice);
+
+        // cache the result of validating the dose form and the issue unit
+
+        const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(doseForm, issueUnit);
+
+        if (!fieldPresResult.flagStatus) {
+
+            res.status(fieldPresResult.status).json(fieldPresResult);
+
+        } else if (!fieldNullResult.flagStatus) {
+
+            res.status(fieldNullResult.status).json(fieldNullResult);
+
+        } else if (!validLevelOfUseResult.flagStatus) {
+
+            res.status(validLevelOfUseResult.status).json(validLevelOfUseResult);
+
+        } else if (!validIssueUnitPriceResult.flagStatus) {
+
+            res.status(validIssueUnitPriceResult.status).json(validIssueUnitPriceResult);
+
+        } else if (!validateDoseFrmIssUnitRes.flagStatus) {
+
+            res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
+
+        } else {
+
+            try {
+                // check if the drug data to update already exists
+
+                const drugExistsResult = await sources.checkIfDrugExists(req.body);
+
+                if (drugExistsResult.flagStatus) {
+
+                    res.status(drugExistsResult.status).json(drugExistsResult);
+
+                } else {
+
+                    try {
+
+                        await drug.update({
+                            name,
+                            doseForm,
+                            strength,
+                            levelOfUse,
+                            therapeuticCategory,
+                            issueUnit,
+                            issueUnitPrice,
+                            expiryDate,
+                        });
+
+                    } catch (err) {
+
+                        console.error(err);
+
+                        res.status(500).json({
+                            description: "Error! Failed to update the drug in the database",
+                            flagStatus: false,
+                            status: 500,
+                        });
+                    }
+                }
+            } catch (err) {
+
+                console.error(err);
+
+                res.status(500).json({
+                    description: "Error! Failed to load the checkIfDrugExistsNearMatch() resource",
+                    flagStatus: false,
+                    status: 500,
                 });
             }
+        }
 
-            // the drug quantity is a calculated field, hence it shouldn't be fetched.
-            else if (req.body.quantity) {
-
-                res.json({
-                    errMsg: "Error! Cannot update the quantity of a drug",
-                });
-
-            } else {
-
-                // validateLevelOfUseAndIssueUnitPrice(req.body, res);
-
-                Drug.validateLevelOfUse(req.body, res);
-                Drug.validateIssueUnitPrice(req.body, res);
-
-                drug.update({
-                    name,
-                    doseForm,
-                    strength,
-                    levelOfUse,
-                    therapeuticCategory,
-                    issueUnit,
-                    issueUnitPrice,
-                    expiryDate,
-                    quantity: 0,
-                }).then((drug) => {
-                    return drug.save();
-
-                }).then((drug) => {
-                    res.json(drug);
-                }).catch((err) => {
-                    res.json({
-                        errMsg: "Error!",
-                        err
-                    });
-                });
-            }
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error!",
-                err
-            });
-        });
     },
 
-    patchDrugsId(req, res) {
+    async patchDrugsId(req, res) {
 
         const DrugId = req.params.id;
         const drugContent = req.body;
 
 
-        Drug.findByPk(DrugId).then((drug) => {
+        const drug = await Drug.findByPk(DrugId);
 
+        // cache the result of trapping the quantity attribute
 
-            // check to see if the drug is being re entered and if so,
-            // increment the drugs quantity
-            validateLevelOfUseAndIssueUnitPrice(req.body);
+        const trapQuantityResult = sources.trapQuantityAttribute(req.body);
 
-            // the drug quantity is a calculated field, hence it shouldn't be fetched.
-            if (req.body.quantity) {
-                res.json({
-                    errMsg: "Error! Cannot update the quantity of a drug",
-                });
+        if (!trapQuantityResult.flagStatus) {
+            res.status(trapQuantityResult.status).json(trapQuantityResult);
+        }
+
+        // check if  the dose form or the issue unit was edited
+        if (req.body.doseForm) {
+
+            if (!req.body.issueUnit) {
+
+                const validateResponse = Drug.validateDoseFormAndIssueUnit(req.body.doseForm, drug.issueUnit);
+                validateResponse.description = "Error! The updated dose form doesn't match the issue unit";
+                return validateResponse;
             }
-            return drug.update(drugContent);
-        }).then((drug) => {
-            // console.log(drug);
-            return drug;
-        }).then((drug) => {
-            res.json(drug);
-        }).catch((err) => {
-            // console.log("Error Occurred");
-            res.json({
-                errMsg: "Error!",
-                err,
+        } else if (req.body.issueUnit) {
+
+            if (!req.body.doseForm) {
+
+                const validateResponse = Drug.validateDoseFormAndIssueUnit(drug.doseForm, drug.issueUnit);
+                validateResponse.description = "Error! The updated issue unit doesn't match the dose form";
+                return validateResponse;
+            }
+        } else {
+
+            // cache the result of validating the dose form and the issue unit
+
+            const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(req.body.doseForm, req.body.issueUnit);
+
+            if (!validateDoseFrmIssUnitRes.flagStatus) {
+
+                res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
+
+            }
+        }
+
+        if (req.body.levelOfUse) {
+
+            const validateLOU = Drug.validateLevelOfUse(req.body.levelOfUse);
+
+            if (!validateLOU.flagStatus) {
+                res.status(validateLOU.status).json(validateLOU);
+            }
+        }
+
+        if (req.body.issueUnitPrice) {
+
+            const validateIssUnitPriceRes = Drug.validateIssueUnitPrice(req.body.issueUnitPrice);
+
+            if (!validateIssUnitPriceRes.flagStatus) {
+                res.status(validateIssUnitPriceRes.status).json(validateIssUnitPriceRes);
+            }
+        }
+
+        try {
+            await drug.update(drugContent);
+
+            res.status(200).json({
+                description : "Successfully updated the drug data in the database",
+                flagStatus : true,
+                status : 200,
             });
-        });
+
+        } catch (err) {
+            console.error(err);
+
+            res.status(500).json({
+                description: "Error! The server failed to update the drug data.",
+                flagStatus: false,
+                status: 500,
+            });
+        }
     },
+
 
     deleteDrugsId(req, res) {
 
@@ -152,4 +242,5 @@ module.exports = {
             });
         });
     }
-};
+}
+;

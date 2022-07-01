@@ -138,6 +138,9 @@ Drug
         levelOfUse: {
             type: DataTypes.INTEGER,
             allowNull: false,
+            // validate: {
+            //     isNumeric: true,
+            // }
         },
 
         // for example antidotes
@@ -171,6 +174,14 @@ Drug
         expiryDate: {
             type: DataTypes.DATEONLY,
             allowNull: false,
+            validate: {
+                isAfter: {
+                    args : "2011-11-05",
+                    msg: {val :"Error! Validation isAfter on expiryDate failed"},
+                    code : 400
+                }
+
+            }
         },
 
     }, {

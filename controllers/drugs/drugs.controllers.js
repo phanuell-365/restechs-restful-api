@@ -22,7 +22,7 @@ module.exports = {
         }).catch((err) => {
             console.log(err);
             res.status(500).json({
-                description: "Error! Failed to load all the drug data from the database."
+                description: "Error! Failed to read all the drug data from the database."
             });
         });
     },
@@ -32,7 +32,7 @@ module.exports = {
      * @param req The request object
      * @param res The response object
      */
-    post(req, res) {
+    async post(req, res) {
 
         const {
             name,
@@ -81,18 +81,22 @@ module.exports = {
 
         } else {
 
-            // check to see if the drug is being re entered and if so,
-            // then it's an error, since the drug already exists.
-            // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
+            // handle any errors that might occur while checking if a drug exists
+            try {
+                // check to see if the drug is being re entered and if so,
+                // then it's an error, since the drug already exists.
+                // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
 
-            sources.checkIfDrugExistsNearMatch(req.body).then(async (drugExistsResult) => {
+                const drugExistsResult = await sources.checkIfDrugExistsNearMatch(req.body);
+
+                // .then(async (drugExistsResult) => {
                 if (drugExistsResult.flagStatus) {
 
                     res.status(drugExistsResult.status).json(drugExistsResult);
 
                 } else {
 
-                    Drug.create({
+                    const createdDrug = await Drug.create({
                         name,
                         doseForm,
                         strength,
@@ -101,25 +105,51 @@ module.exports = {
                         issueUnit,
                         issueUnitPrice,
                         expiryDate,
-                    }).then((drug) => {
+                    });
 
-                        return drug.save();
+                    // .then((drug) => {
 
-                    }).then((drug) => res.json(drug))
+                    // handle any exceptions thrown while saving the drug into the database
+                    try {
+                        await createdDrug.save();
 
-                        .catch((err) => res.json({
+                        res.status(201).json({
+                            description: "Successfully added the drug into the database",
+                            flagStatus: true,
+                            status: 201,
+                        });
 
-                            errMsg: "Error!",
-                            err,
-                        }).status(500));
+                    } catch (e) {
+                        console.error(e);
 
+                        console.error(e.message);
+
+                        res.status(500).json({
+                            description: "Error! Failed to add the drug into the database",
+                            flagStatus: false,
+                            status: 500,
+                        });
+                    }
                 }
-            });
+            } catch (err) {
+                console.error(err);
+
+                console.error("err message -> ", err.message);
+                console.error("err name ->", err.name);
+                console.error("err cause ->", err.cause);
+                console.error("err options ->", err.options);
+
+                res.status(500).json({
+                    description: "Error! Failed to check if the drug exists in the database",
+                    flagStatus: false,
+                    status: 500,
+                });
+            }
         }
     },
 
 
-    // TODO: Change the logic for deletion to cancellation
+// TODO: Change the logic for deletion to cancellation
 
     delete(req, res) {
 
@@ -158,4 +188,5 @@ module.exports = {
             });
         });
     },
+
 };
