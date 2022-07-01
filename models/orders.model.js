@@ -1,6 +1,6 @@
 //jshint esversion:9
 
-const {Sequelize, Model} = require("sequelize");
+const {Model, DataTypes} = require("sequelize");
 
 const sequelize = require("../config/config.db");
 
@@ -10,28 +10,31 @@ class Order extends Model {
 
 Order.init({
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.UUID,
+        defaultValue: DataTypes.UUIDV4,
+        // autoIncrement: true,
         allowNull: false,
         primaryKey: true,
+        comment : "The order's id",
     },
 
     // for example a pack size could be a box, bottle ...
-    packSize : {
-        type : Sequelize.STRING,
-        allowNull : false,
+    packSize: {
+        type: DataTypes.STRING,
+        allowNull: false,
     },
 
     // for example, how many drug boxes are being ordered?
     packSizeQuantity: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         allowNull: false,
     },
     // this could either be pending, partial, delivered or cancelled
     //! This is a calculated field
     status: {
-        type: Sequelize.STRING,
+        type: DataTypes.STRING,
         allowNull: false,
+        defaultValue: "pending"
     },
 
 }, {

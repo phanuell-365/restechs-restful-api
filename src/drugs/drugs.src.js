@@ -23,10 +23,10 @@ module.exports = {
         responseArr.sort();
 
         const absentValuesArr = _.difference(requiredArr, responseArr);
-
-        console.log("absentValuesArr", absentValuesArr);
-        console.log("responseArr", responseArr);
-        console.log("requiredArr", requiredArr);
+        //
+        // console.log("absentValuesArr", absentValuesArr);
+        // console.log("responseArr", responseArr);
+        // console.log("requiredArr", requiredArr);
 
         // if true, it means that some the values weren't passed
         if (absentValuesArr.length !== 0) {
@@ -40,12 +40,12 @@ module.exports = {
 
             })) {
                 const description = `Error! The field quantity is a computed attribute, thus it should not be set`;
-                return {description, flagStatus: false, status: 406};
+                return {description, flagStatus: false, status: 400};
             }
 
             const description = `Error! The field(s) ${absentValuesArr.toString()} are not set`;
 
-            return {description, flagStatus: false, status: 412};
+            return {description, flagStatus: false, status: 400};
 
         } else {
 
@@ -73,7 +73,7 @@ module.exports = {
 
                 const description = `Error! The value of ${fieldMapKey} cannot be null`;
 
-                obj = {description, flagStatus: false, status: 412};
+                obj = {description, flagStatus: false, status: 400};
 
                 break;
 
@@ -89,7 +89,8 @@ module.exports = {
     /**
      * @description Check if a drug is already present in the database
      * @param drugInfo The drug information to be used in the checking.
-     * @returns {Promise<*>} A promise object containing the description, flagStatus and status
+     * @returns {Promise<*>} A promise object containing the description,
+     * flagStatus being true if the drug already exists and status
      */
     async checkIfDrugExists(drugInfo) {
 
@@ -109,6 +110,8 @@ module.exports = {
                 }
 
             });
+
+            // console.log("found drugs ->", drugs);
 
             if (!_.isEmpty(drugs)) {
 
@@ -140,20 +143,113 @@ module.exports = {
         return retStatus;
     },
 
-    incrementDrugQuantity(drugs) {
+    /**
+     * @desc Increments the drug quantities for the specified drug ids
+     * @param drugIds The drug ids to perform incrementation on
+     * @param val The value for which to add to the current drug's quantity.
+     */
+    incrementDrugQuantity(drugIds, val) {
 
-        drugs.forEach((drug) => {
+        drugIds.forEach(async (drug) => {
 
-            let currentQuantity = drug.quantity;
+            try {
+                const foundDrug = await Drug.findByPk(drug);
 
-            currentQuantity++;
+                let currentQuantity = drug.quantity;
 
-            drug.update({quantity: currentQuantity}).catch((err) => {
+                currentQuantity += val;
 
-                console.error("Error! Failed to increment the drug's quantity", err);
+                foundDrug.update({quantity: currentQuantity}).catch((err) => {
 
-            });
+                    console.error("Error! Failed to increment the drug's quantity", err);
+
+                });
+
+            } catch (err) {
+                console.error(err);
+            }
+
         });
+    },
+
+    async checkIfDrugExistsNearMatch(drugInfo) {
+
+        let retObject;
+
+        try {
+            const drugExistsResult = await this.checkIfDrugExists(drugInfo);
+            // then(async (drugExitsResult) => {
+
+            if (!drugExistsResult.flagStatus) {
+
+                try {
+                    const drugs = await Drug.findAll({
+                        where: {
+                            name: drugInfo.name,
+                            doseForm: drugInfo.doseForm,
+                            strength: drugInfo.strength,
+                            issueUnit: drugInfo.issueUnit,
+                            expiryDate: drugInfo.expiryDate,
+                        }
+                    });
+
+                    if (!_.isEmpty(drugs)) {
+
+                        retObject = {
+                            description: "Error! The drug already exists!" +
+                                " The drug details match a drug in the database except for the level" +
+                                " of use and unit price.",
+                            flagStatus: true,
+                            status: 400,
+                        };
+
+                        return retObject;
+                    } else {
+                        // the description is success since it didn't find any drug with the same drug info
+                        // hence the flag status' value and the status
+                        retObject = {
+                            description: "success",
+                            flagStatus: false,
+                            status: 200,
+                        };
+
+                        return retObject;
+                    }
+                } catch (e) {
+                    console.error(e);
+
+                    retObject = {
+                        description: "Error! Failed to collect all the drugs from the database",
+                        flagStatus: false,
+                        status: 500,
+                    };
+                    return retObject;
+                }
+            } else if (drugExistsResult.flagStatus) {
+                retObject = drugExistsResult;
+
+                return retObject;
+            } else {
+
+                retObject = {
+                    description: "success",
+                    flagStatus: true,
+                    status: 200,
+                };
+
+                return retObject;
+            }
+        } catch (err) {
+            console.error(err);
+
+            retObject = {
+                description: "Error! Failed to load resource 'checkIfDrugExists()'",
+                flagStatus: false,
+                status: 500,
+            };
+
+            return retObject;
+        }
     },
 
 };

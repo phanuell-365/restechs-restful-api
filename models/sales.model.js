@@ -1,6 +1,6 @@
 // jshint esversion:9
 
-const {Sequelize, Model} = require("sequelize");
+const {Model, DataTypes} = require("sequelize");
 
 const sequelize = require("../config/config.db");
 
@@ -10,22 +10,23 @@ class Sale extends Model {
 
 Sale.init({
     id: {
-        type: Sequelize.INTEGER,
-        autoIncrement: true,
+        type: DataTypes.UUID,
+        // autoIncrement: true,
+        defaultValue: DataTypes.UUIDV4,
         allowNull: false,
         primaryKey: true,
     },
 
     // the number of drugs sold
     quantity: {
-        type: Sequelize.INTEGER,
+        type: DataTypes.INTEGER,
         allowNull: false,
     },
 
     // the total value of the drugs sold
     //! This is a computed attribute
     total: {
-        type: Sequelize.DOUBLE,
+        type: DataTypes.DOUBLE,
         allowNull: false,
     },
 
@@ -34,7 +35,7 @@ Sale.init({
     // into the inventory.
     //! This is a computed attribute
     status:{
-        type : Sequelize.STRING,
+        type : DataTypes.STRING,
         allowNull : false,
     }
 }, {

@@ -3,12 +3,8 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-require("lodash");
-const {
-    checkIfDrugExists,
-    checkFieldsArePresent,
-    checkIfFieldsAreNull,
-} = require("../../src/drugs/drugs.src");
+
+const sources = require("../../src/drugs/drugs.src");
 
 module.exports = {
 
@@ -53,9 +49,9 @@ module.exports = {
 
         const requiredFields = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
 
-        const fieldPresResult = checkFieldsArePresent(requiredFields, req.body);
+        const fieldPresResult = sources.checkFieldsArePresent(requiredFields, req.body);
 
-        const fieldNullResult = checkIfFieldsAreNull(req.body);
+        const fieldNullResult = sources.checkIfFieldsAreNull(req.body);
 
         const validateLevelOfUseRes = Drug.validateLevelOfUse(levelOfUse);
 
@@ -87,16 +83,10 @@ module.exports = {
 
             // check to see if the drug is being re entered and if so,
             // then it's an error, since the drug already exists.
-            checkIfDrugExists(req.body).then(async (drugExistsResult) => {
+            // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
 
+            sources.checkIfDrugExistsNearMatch(req.body).then(async (drugExistsResult) => {
                 if (drugExistsResult.flagStatus) {
-
-                    //! The logic changed
-                    // incrementDrugQuantity(status.drugs);
-
-                    // res.json({
-                    //     msg: "Successfully incremented the quantity of the drugs",
-                    // }).status(200);
 
                     res.status(drugExistsResult.status).json(drugExistsResult);
 
@@ -111,7 +101,6 @@ module.exports = {
                         issueUnit,
                         issueUnitPrice,
                         expiryDate,
-                        quantity: 0,
                     }).then((drug) => {
 
                         return drug.save();
@@ -129,6 +118,9 @@ module.exports = {
         }
     },
 
+
+    // TODO: Change the logic for deletion to cancellation
+
     delete(req, res) {
 
         Drug.findAll().then((drugs) => {
@@ -143,23 +135,27 @@ module.exports = {
 
                 }).catch(err => {
 
-                    res.json({
-                        errMsg: "Error! Failed to delete the drug.",
+                    res.status(500).json({
+                        status: 500,
+                        description: "Error! Failed to delete the drug.",
                         err,
-                    }).status(500);
+                    });
                 });
             });
 
-            res.json({
-                msg: "Successfully deleted all the drugs",
+            res.status(200).json({
+                description: "Successfully deleted all the drugs",
+                flagStatus: true,
+                status: 200,
                 destroyedDrugs,
             }).status(200);
 
         }).catch((err) => {
-            res.json({
-                errMsg: "Error!",
+            res.status(500).json({
+                description: "Error! Failed to delete the drugs from the database",
+                status: 500,
                 err
-            }).status(500);
+            });
         });
     },
 };

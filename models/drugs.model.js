@@ -1,6 +1,6 @@
 //jshint esversion:9
 
-const {Sequelize, Model} = require("sequelize");
+const {Model, DataTypes} = require("sequelize");
 
 const sequelize = require("../config/config.db");
 
@@ -24,13 +24,13 @@ class Drug extends Model {
 
             const description = `The drug level of use cannot be ${intLevelOfUse}`;
 
-            return {description, flagStatus: false, status: 412};
+            return {description, flagStatus: false, status: 400};
 
         } else if (intLevelOfUse > 10) {
             return {
                 description: `The drug level of use cannot be ${intLevelOfUse}`,
                 flagStatus: false,
-                status: 412,
+                status: 400,
             };
         } else {
 
@@ -54,13 +54,13 @@ class Drug extends Model {
                 return {
                     description: `The drug issue unit price cannot be ${issueUnitPrice}`,
                     flagStatus: false,
-                    status: 412,
+                    status: 400,
                 };
             } else {
                 return {
                     description: `The drug issue unit price cannot be ${doubleIssueUnitPrice}`,
                     flagStatus: false,
-                    status: 412,
+                    status: 400,
                 };
             }
         } else {
@@ -98,7 +98,7 @@ class Drug extends Model {
             return {
                 description: "The dose form and the issue unit must match",
                 flagStatus: false,
-                status: 412,
+                status: 400,
             };
         }
     }
@@ -109,64 +109,67 @@ Drug
     .init({
         // Model attributes definition
         id: {
-            type: Sequelize.INTEGER,
-            autoIncrement: true,
+            type: DataTypes.UUID,
+            defaultValue: DataTypes.UUIDV4,
+            // autoIncrement: true,
             allowNull: false,
-            primaryKey: true
+            primaryKey: true,
         },
 
         // the name of the drug, for example amoxicillin
         name: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         // for example a tablet, capsule, injection ...
         doseForm: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         // for example 6mg (as sodium phosphate)1mL amp
         strength: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         // for example 3, 5, 4, 2
         levelOfUse: {
-            type: Sequelize.INTEGER,
+            type: DataTypes.INTEGER,
             allowNull: false,
         },
 
         // for example antidotes
         therapeuticCategory: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         // for example TAB=tablet, INJ=injection, CAP=capsule
         issueUnit: {
-            type: Sequelize.STRING,
+            type: DataTypes.STRING,
             allowNull: false,
         },
 
         // the price of one TAB or CAP or INJ
         issueUnitPrice: {
-            type: Sequelize.DOUBLE,
+            type: DataTypes.DOUBLE,
             allowNull: false,
         },
 
         // the total number of drugs in stock
         //! This is a computed attribute
         quantity: {
-            type: Sequelize.INTEGER,
+            type: DataTypes.INTEGER,
             allowNull: false,
+            defaultValue: 0,
+            comment: 'The total quantity of drugs in stock'
         },
 
         // the drug's expiry date
         expiryDate: {
-            type: Sequelize.DATEONLY,
+            type: DataTypes.DATEONLY,
             allowNull: false,
         },
 
