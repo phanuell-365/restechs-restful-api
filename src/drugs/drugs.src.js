@@ -7,6 +7,17 @@ const _ = require("lodash");
 
 module.exports = {
 
+    hydrateErrorMessage(errMsgArr) {
+
+        let newErrStr;
+
+        errMsgArr.forEach((errMsg) => {
+            newErrStr = newErrStr + "..." + errMsg;
+        });
+
+        return newErrStr;
+    },
+
     /**
      * @description Checks if all the valid requested fields by the user are present in the request body
      * @param requiredArray Holds the valid field names for a request
@@ -61,7 +72,7 @@ module.exports = {
 
             const value = String(fieldMapValue);
 
-            if (value === '') {
+            if (value === "") {
 
                 const description = `Error! The value of ${fieldMapKey} cannot be null`;
 
@@ -117,7 +128,6 @@ module.exports = {
                 // hence the flag status' value and the status
                 retStatus = {
                     description: "success",
-                    flagStatus: false,
                     status: 200,
                 };
             }
@@ -127,7 +137,6 @@ module.exports = {
 
             retStatus = {
                 description: "Error! Failed to check all drugs in the database",
-                flagStatus: false,
                 status: 500,
             };
         }
@@ -172,7 +181,7 @@ module.exports = {
             const drugExistsResult = await this.checkIfDrugExists(drugInfo);
             // then(async (drugExitsResult) => {
 
-            if (!drugExistsResult.flagStatus) {
+            if (!(drugExistsResult.status >= 200 || drugExistsResult.status <= 399)) {
 
                 try {
                     const drugs = await Drug.findAll({
@@ -187,11 +196,11 @@ module.exports = {
 
                     if (!_.isEmpty(drugs)) {
 
+                        console.error(drugs);
                         retObject = {
                             description: "Error! The drug already exists!" +
                                 " The drug details match a drug in the database except for the level" +
                                 " of use and unit price.",
-                            flagStatus: true,
                             status: 400,
                         };
 
@@ -199,11 +208,7 @@ module.exports = {
                     } else {
                         // the description is success since it didn't find any drug with the same drug info
                         // hence the flag status' value and the status
-                        retObject = {
-                            description: "success",
-                            flagStatus: false,
-                            status: 200,
-                        };
+                        retObject = drugExistsResult;
 
                         return retObject;
                     }
@@ -217,7 +222,7 @@ module.exports = {
                     };
                     return retObject;
                 }
-            } else if (drugExistsResult.flagStatus) {
+            } else if (drugExistsResult.status >= 200 || drugExistsResult.status <= 399) {
                 retObject = drugExistsResult;
 
                 return retObject;
@@ -225,7 +230,6 @@ module.exports = {
 
                 retObject = {
                     description: "success",
-                    flagStatus: true,
                     status: 200,
                 };
 

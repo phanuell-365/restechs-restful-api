@@ -45,106 +45,73 @@ module.exports = {
             expiryDate,
         } = req.body;
 
-        // make an array of required fields
 
-        const requiredFields = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
+        // handle any errors that might occur while checking if a drug exists
+        try {
+            // check to see if the drug is being re entered and if so,
+            // then it's an error, since the drug already exists.
+            // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
 
-        const fieldPresResult = sources.checkFieldsArePresent(requiredFields, req.body);
+            const drugExistsResult = await sources.checkIfDrugExistsNearMatch(req.body);
 
-        const fieldNullResult = sources.checkIfFieldsAreNull(req.body);
+            if (drugExistsResult.status < 200 || drugExistsResult.status > 399) {
 
-        const validateLevelOfUseRes = Drug.validateLevelOfUse(levelOfUse);
+                res.status(drugExistsResult.status).json(drugExistsResult);
 
-        const validateIssUniPriRes = Drug.validateIssueUnitPrice(issueUnitPrice);
+            } else {
 
-        const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(doseForm, issueUnit);
+                Drug.create({
+                    name,
+                    doseForm,
+                    strength,
+                    levelOfUse,
+                    therapeuticCategory,
+                    issueUnit,
+                    issueUnitPrice,
+                    expiryDate,
+                }).then((drug) => {
+                    return drug.save();
+                }).then((drug) => {
 
-        if (!fieldPresResult.flagStatus) {
+                    console.log(`Created the drug ${drug.toJSON()}`);
 
-            res.status(fieldPresResult.status).json(fieldPresResult);
-
-        } else if (!fieldNullResult.flagStatus) {
-
-            res.status(fieldNullResult.status).json(fieldNullResult);
-
-        } else if (!validateLevelOfUseRes.flagStatus) {
-
-            res.status(validateLevelOfUseRes.status).json(validateLevelOfUseRes);
-
-        } else if (!validateIssUniPriRes.flagStatus) {
-
-            res.status(validateIssUniPriRes.status).json(validateIssUniPriRes);
-
-        } else if (!validateDoseFrmIssUnitRes.flagStatus) {
-
-            res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
-
-        } else {
-
-            // handle any errors that might occur while checking if a drug exists
-            try {
-                // check to see if the drug is being re entered and if so,
-                // then it's an error, since the drug already exists.
-                // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
-
-                const drugExistsResult = await sources.checkIfDrugExistsNearMatch(req.body);
-
-                // .then(async (drugExistsResult) => {
-                if (drugExistsResult.flagStatus) {
-
-                    res.status(drugExistsResult.status).json(drugExistsResult);
-
-                } else {
-
-                    const createdDrug = await Drug.create({
-                        name,
-                        doseForm,
-                        strength,
-                        levelOfUse,
-                        therapeuticCategory,
-                        issueUnit,
-                        issueUnitPrice,
-                        expiryDate,
+                    res.status(201).json({
+                        description: "Successfully added the drug into the database",
+                        status: 201,
                     });
+                }).catch((err) => {
 
-                    // .then((drug) => {
+                    if (err.name === "SequelizeValidationError") {
 
-                    // handle any exceptions thrown while saving the drug into the database
-                    try {
-                        await createdDrug.save();
+                        console.error(err);
 
-                        res.status(201).json({
-                            description: "Successfully added the drug into the database",
-                            flagStatus: true,
-                            status: 201,
+                        const errorMessages = err.message.split("\n");
+
+                        res.status(400).json({
+                            description: errorMessages,
+                            status: 400,
+                            errorsCount: errorMessages.length,
                         });
 
-                    } catch (e) {
-                        console.error(e);
+                    } else {
 
-                        console.error(e.message);
+                        console.error(err);
 
                         res.status(500).json({
-                            description: "Error! Failed to add the drug into the database",
-                            flagStatus: false,
+                            description: "Error! Failed to check if the drug exists in the database",
                             status: 500,
                         });
                     }
-                }
-            } catch (err) {
-                console.error(err);
-
-                console.error("err message -> ", err.message);
-                console.error("err name ->", err.name);
-                console.error("err cause ->", err.cause);
-                console.error("err options ->", err.options);
-
-                res.status(500).json({
-                    description: "Error! Failed to check if the drug exists in the database",
-                    flagStatus: false,
-                    status: 500,
                 });
+
             }
+        } catch (err) {
+            console.error(err);
+
+            res.status(500).json({
+                description: "Error! Failed to load resource checkIfDrugExistsNearMatch ()",
+                status: 500,
+            });
         }
     },
 
@@ -176,7 +143,6 @@ module.exports = {
             res.status(200).json({
                 description: "Successfully deleted all the drugs",
                 flagStatus: true,
-                status: 200,
                 destroyedDrugs,
             }).status(200);
 
@@ -189,4 +155,5 @@ module.exports = {
         });
     },
 
-};
+}
+;

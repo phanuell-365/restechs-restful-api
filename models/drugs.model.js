@@ -1,107 +1,18 @@
 //jshint esversion:9
 
+"use strict";
+
 const {Model, DataTypes} = require("sequelize");
 
 const sequelize = require("../config/config.db");
 
-const _ = require("lodash");
+const data = require("../data/drugs/drugs.data");
 
+// const sources = require("../src/drugs/drugs.src");
 /**
  *
  */
 class Drug extends Model {
-
-    /**
-     * @description Checks if the level of use has a valid value, if below zero or not a number
-     * @returns {{flagStatus: boolean, description: string, status: number}}
-     * @param levelOfUse The drug's level of use
-     */
-    static validateLevelOfUse(levelOfUse) {
-
-        const intLevelOfUse = _.toInteger(levelOfUse);
-
-        if (intLevelOfUse <= 0 || isNaN(intLevelOfUse)) {
-
-            const description = `The drug level of use cannot be ${intLevelOfUse}`;
-
-            return {description, flagStatus: false, status: 400};
-
-        } else if (intLevelOfUse > 10) {
-            return {
-                description: `The drug level of use cannot be ${intLevelOfUse}`,
-                flagStatus: false,
-                status: 400,
-            };
-        } else {
-
-            return {description: "success", flagStatus: true, status: 200};
-        }
-    }
-
-    /**
-     * @desc Checks if the issue unit price has a valid value, if it's below zero or not a number
-     * @returns {{flagStatus: boolean, description: string, status: number}}
-     * @param issueUnitPrice The drug's issue unit price
-     */
-    static validateIssueUnitPrice(issueUnitPrice) {
-
-        const doubleIssueUnitPrice = _.toNumber(issueUnitPrice);
-
-        if (doubleIssueUnitPrice <= 0 || isNaN(doubleIssueUnitPrice)) {
-
-            if (isNaN(doubleIssueUnitPrice)) {
-
-                return {
-                    description: `The drug issue unit price cannot be ${issueUnitPrice}`,
-                    flagStatus: false,
-                    status: 400,
-                };
-            } else {
-                return {
-                    description: `The drug issue unit price cannot be ${doubleIssueUnitPrice}`,
-                    flagStatus: false,
-                    status: 400,
-                };
-            }
-        } else {
-            return {
-                description: `success`,
-                flagStatus: true,
-                status: 200,
-            };
-        }
-    }
-
-    // static validateDoseForm(drugInfo) {
-    //
-    // }
-
-    /**
-     * @desc Checks to see whether the dose form matches the issue unit
-     * @returns {{flagStatus: boolean, description: string, status: number}}
-     * @param doseForm The drug's dose form, for example "Tablet", "Capsule", "Injection" ...
-     * @param issueUnit The drug's issue unit, for example "TAB for Tablet", "INJ for Injection", "CAP for Capsule"
-     */
-    static validateDoseFormAndIssueUnit(doseForm, issueUnit) {
-
-        let doseFormVal = String(doseForm);
-
-        let issueUnitVal = doseFormVal.slice(0, 3);
-
-        if (issueUnitVal.toUpperCase() === issueUnit) {
-            return {
-                description: "success",
-                flagStatus: true,
-                status: 200,
-            };
-        } else {
-            return {
-                description: "The dose form and the issue unit must match",
-                flagStatus: false,
-                status: 400,
-            };
-        }
-    }
 
 }
 
@@ -120,45 +31,134 @@ Drug
         name: {
             type: DataTypes.STRING,
             allowNull: false,
+            validate: {
+                notNull: {
+                    msg: "The name of the drug cannot be null",
+                }
+            }
         },
 
         // for example a tablet, capsule, injection ...
         doseForm: {
             type: DataTypes.STRING,
             allowNull: false,
+            validate: {
+                notNull: {
+                    msg: "The dose form of the drug cannot be null",
+                },
+                isIn: {
+                    args: data.validDrugForms,
+                    msg: (function () {
+
+                        return `The dose form can only be one of these (${data.validDrugForms.toString()})`;
+                    })()
+                }
+            }
         },
 
         // for example 6mg (as sodium phosphate)1mL amp
         strength: {
             type: DataTypes.STRING,
             allowNull: false,
+            validate: {
+                isContaining(value) {
+
+                    const newVal = String(value);
+
+                    if (!data.validDrugStrengthMeasurements.find((drugStrengthMeasurement) => {
+
+                        return newVal.includes(drugStrengthMeasurement);
+
+                    })) {
+
+                        const errorDescription = `The drug strength must contain at least one measurement of type (${data.validDrugStrengthMeasurements.toString()})`;
+
+                        throw new Error(errorDescription);
+                    }
+                },
+            }
         },
 
         // for example 3, 5, 4, 2
         levelOfUse: {
             type: DataTypes.INTEGER,
             allowNull: false,
-            // validate: {
-            //     isNumeric: true,
-            // }
+            validate: {
+                notNull: {
+                    msg: "The drug level of use should not be null"
+                },
+                isInt: {
+                    args: true,
+                    msg: "The drug level of use should be an integer"
+                },
+                max: {
+                    args: 6,
+                    msg: "The drug level of use should not be more than 6",
+                },
+                min: {
+                    args: 1,
+                    msg: "The drug level of use should not be less than 1",
+                }
+            }
         },
 
         // for example antidotes
         therapeuticCategory: {
             type: DataTypes.STRING,
             allowNull: false,
+            validate: {
+                notNull: {
+                    msg: "The drug's therapeutic category should not be null",
+                },
+                // TODO: Add all the drug therapeutic categories
+            }
         },
 
         // for example TAB=tablet, INJ=injection, CAP=capsule
         issueUnit: {
             type: DataTypes.STRING,
             allowNull: false,
+            validate: {
+                notNull: {
+                    msg: "The drug's issue unit should not be null",
+                },
+                isValidIssueUnit(value) {
+
+                    const newVal = String(value);
+
+                    if (!data.validIssueUnits.find(validIssueUnit => validIssueUnit === newVal)) {
+
+                        const errorDescription = `The issue unit should be at least on of ${data.validIssueUnits.toString()}`;
+
+                        throw new Error(errorDescription);
+                    } else {
+
+                        const estimatedIssueUnit = String(this.doseForm).slice(0, 3).toLowerCase();
+
+                        if (!newVal.toLowerCase().includes(estimatedIssueUnit)) {
+
+                            // console.log("The newVal value -> ", newVal.toLowerCase(), "The estimated issue unit -> ", estimatedIssueUnit);
+                            const errorDescription = `The issue unit should at least match the dose form ${this.doseForm}`;
+
+                            throw new Error(errorDescription);
+                        }
+                    }
+                }
+            }
         },
 
         // the price of one TAB or CAP or INJ
         issueUnitPrice: {
             type: DataTypes.DOUBLE,
             allowNull: false,
+            validate: {
+                notNull: {
+                    msg: "The drug's issue unit price should not be null",
+                },
+                isFloat: {
+                    msg: "The drug's issue unit price can only be a number of a float",
+                }
+            }
         },
 
         // the total number of drugs in stock
@@ -167,7 +167,12 @@ Drug
             type: DataTypes.INTEGER,
             allowNull: false,
             defaultValue: 0,
-            comment: 'The total quantity of drugs in stock'
+            comment: "The total quantity of drugs in stock",
+            validate: {
+                isNumeric: {
+                    msg: "The quantity should be an integer",
+                }
+            }
         },
 
         // the drug's expiry date
@@ -175,12 +180,22 @@ Drug
             type: DataTypes.DATEONLY,
             allowNull: false,
             validate: {
+                notNull: {
+                    msg: "The value of date cannot be null"
+                }, isBefore: {
+                    args: "2028-01-01",
+                    msg: (function () {
+                        let thisYear = new Date().getFullYear();
+                        thisYear += 5;
+                        return `The year should be after ${thisYear}`;
+                    })()
+                },
                 isAfter: {
-                    args : "2011-11-05",
-                    msg: {val :"Error! Validation isAfter on expiryDate failed"},
-                    code : 400
+                    args: (function () {
+                        return new Date().toString();
+                    })(),
+                    msg: "The drug's expiry date has already reached.",
                 }
-
             }
         },
 
@@ -189,5 +204,4 @@ Drug
         modelName: "Drug"
     });
 
-module
-    .exports = Drug;
+module.exports = Drug;
