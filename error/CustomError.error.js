@@ -2,9 +2,17 @@
 
 "use strict";
 
+/**
+ *
+ */
 class CustomError extends Error{
 
-    constructor(errObj, ...params) {
+    /**
+     * Constructs a CustomError with errInfoObj being an object that describe more about the error
+     * @param errInfoObj An object that describes more about the error that occurred
+     * @param params Other params including the error message describing what caused the error.
+     */
+    constructor(errInfoObj, ...params) {
         super(...params);
 
         if (Error.captureStackTrace){
@@ -12,9 +20,8 @@ class CustomError extends Error{
         }
 
         this.name = "CustomError";
-        this.errObj = errObj;
-        this.date = new Date();
-        this.cause = errObj;
+        this.infoObj = errInfoObj;
+        // this.date = new Date();
 
     }
 

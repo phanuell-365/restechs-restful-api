@@ -3,8 +3,9 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-
-const sources = require("../../src/drugs/drugs.src");
+//
+// const sources = require("../../src/drugs/drugs.src");
+// const CustomError = require("../../error/CustomError.error");
 
 module.exports = {
 
@@ -12,106 +13,63 @@ module.exports = {
      * @description Handles the get request to the /drugs route
      * @param req The request object
      * @param res The response object
+     * @param next
      */
-    get(req, res) {
+    get(req, res, next) {
+        Drug.findAll()
+            .then((drugs) => {
 
-        Drug.findAll().then((drugs) => {
+                console.log(res.locals);
 
-            res.status(200).json(drugs);
+                drugs.forEach(drug => console.log(drug.toJSON()));
 
-        }).catch((err) => {
-            console.log(err);
-            res.status(500).json({
-                description: "Error! Failed to read all the drug data from the database."
-            });
-        });
+                if (res.headersSent) {
+                    console.log("Aah! Shit! Headers been sent");
+                    // next(err);
+                } else {
+                    console.log("Oh! Ah! Not Yet Still");
+                }
+
+                res.status(200).json(drugs);
+
+            })
+            .catch(next);
     },
 
     /**
      * @description Handles the post requests to the /drugs route
      * @param req The request object
      * @param res The response object
+     * @param next
      */
-    async post(req, res) {
+    post(req, res, next) {
 
-        const {
-            name,
-            doseForm,
-            strength,
-            levelOfUse,
-            therapeuticCategory,
-            issueUnit,
-            issueUnitPrice,
-            expiryDate,
-        } = req.body;
+        if (res.locals.validDrugInfo) {
 
+            const validDrugInfo = res.locals.validDrugInfo;
 
-        // handle any errors that might occur while checking if a drug exists
-        try {
-            // check to see if the drug is being re entered and if so,
-            // then it's an error, since the drug already exists.
-            // checkIfDrugExists(req.body).then(async (drugExistsResult) => {
+            Drug.create(validDrugInfo)
 
-            const drugExistsResult = await sources.checkIfDrugExistsNearMatch(req.body);
+                .then((drug) => {
+                    if (!res.locals.drugExists) {
 
-            if (drugExistsResult.status < 200 || drugExistsResult.status > 399) {
+                        return drug.save();
+                    }
+                    res.status(400).json({
+                        description: `Error! The drug with the data ${Object.values(req.body)} already exists`,
+                    });
 
-                res.status(drugExistsResult.status).json(drugExistsResult);
+                })
+                .then((drug) => {
 
-            } else {
-
-                Drug.create({
-                    name,
-                    doseForm,
-                    strength,
-                    levelOfUse,
-                    therapeuticCategory,
-                    issueUnit,
-                    issueUnitPrice,
-                    expiryDate,
-                }).then((drug) => {
-                    return drug.save();
-                }).then((drug) => {
-
-                    console.log(`Created the drug ${drug.toJSON()}`);
+                    console.log("Successfully created the drug ->", drug.toJSON());
 
                     res.status(201).json({
                         description: "Successfully added the drug into the database",
-                        status: 201,
                     });
-                }).catch((err) => {
 
-                    if (err.name === "SequelizeValidationError") {
-
-                        console.error(err);
-
-                        const errorMessages = err.message.split("\n");
-
-                        res.status(400).json({
-                            description: errorMessages,
-                            status: 400,
-                            errorsCount: errorMessages.length,
-                        });
-
-                    } else {
-
-                        console.error(err);
-
-                        res.status(500).json({
-                            description: "Error! Failed to check if the drug exists in the database",
-                            status: 500,
-                        });
-                    }
-                });
-
-            }
-        } catch (err) {
-            console.error(err);
-
-            res.status(500).json({
-                description: "Error! Failed to load resource checkIfDrugExistsNearMatch ()",
-                status: 500,
-            });
+                })
+                .catch(next);
         }
     },
 

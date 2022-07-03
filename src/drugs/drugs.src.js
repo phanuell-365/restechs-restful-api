@@ -3,19 +3,66 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
+
+const CustomError = require("../../error/CustomError.error");
+
 const _ = require("lodash");
 
 module.exports = {
 
-    hydrateErrorMessage(errMsgArr) {
+    getDrugAttributes() {
+        const drugAttributes = Object.entries(Drug.getAttributes());
 
-        let newErrStr;
+        const drugAttr = [];
 
-        errMsgArr.forEach((errMsg) => {
-            newErrStr = newErrStr + "..." + errMsg;
+        drugAttributes.forEach((drugAttribute) => {
+            drugAttr.push(drugAttribute[0]);
         });
 
-        return newErrStr;
+        return drugAttr;
+    },
+
+    async checkForUndefined(obj) {
+
+        const newObj = Object(obj);
+
+        Object.entries(newObj).forEach(([key, value]) => {
+
+            if (value === undefined || value === null || !value) {
+
+                throw new CustomError({
+                    description: `Error! The value of ${key} is undefined`,
+                    status: 400,
+                }, `Error! The value of ${key} is ${value}`);
+
+            }
+        });
+    },
+
+    async validateRequestBody(reqBody) {
+
+        const bodyMap = new Map(Object.entries(reqBody));
+
+        const drugAttributes = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
+        const lastElement = drugAttributes[drugAttributes.length - 1];
+
+        bodyMap.forEach((value, key) => {
+
+            if (drugAttributes.includes(key)) {
+
+                const pos = drugAttributes.indexOf(key);
+
+                drugAttributes.splice(pos, 1);
+
+            }
+        });
+
+        if (drugAttributes.length && !drugAttributes.includes(lastElement)) {
+            throw new CustomError({
+                description: `The attribute(s) ${drugAttributes.toString()} have the value(s) of undefined`,
+                status: 400,
+            });
+        }
     },
 
     /**
@@ -92,56 +139,121 @@ module.exports = {
     /**
      * @description Check if a drug is already present in the database
      * @param drugInfo The drug information to be used in the checking.
-     * @returns {Promise<*>} A promise object containing the description,
+     * @returns  A promise object containing the description,
      * flagStatus being true if the drug already exists and status
      */
     async checkIfDrugExists(drugInfo) {
 
         let retStatus;
 
+        console.log("In here");
+
         try {
-            const drugs = await Drug.findAll({
 
-                where: {
-                    name: drugInfo.name,
-                    doseForm: drugInfo.doseForm,
-                    strength: drugInfo.strength,
-                    levelOfUse: drugInfo.levelOfUse,
-                    issueUnit: drugInfo.issueUnit,
-                    issueUnitPrice: drugInfo.issueUnitPrice,
-                    expiryDate: drugInfo.expiryDate,
+            this.validateRequestBody(drugInfo);
+
+            this.checkForUndefined(drugInfo).then(() => {
+
+                console.log("In here");
+
+
+                console.error("Athi River 1");
+
+                Drug.findAll({
+
+                    where: {
+                        name: drugInfo.name,
+                        doseForm: drugInfo.doseForm,
+                        strength: drugInfo.strength,
+                        levelOfUse: drugInfo.levelOfUse,
+                        issueUnit: drugInfo.issueUnit,
+                        issueUnitPrice: drugInfo.issueUnitPrice,
+                        expiryDate: drugInfo.expiryDate,
+                    }
+
+                }).then((drugs) => {
+
+                    console.error("Athi River 2");
+                    if (drugs.length) {
+
+                        console.error("Athi River 3");
+                        throw new CustomError({
+                            description: `Error! The drug with the data ${Object.values(drugInfo)} already exists`,
+                            status: 400,
+                        });
+                    } else {
+                        console.error("Athi River 4");
+
+                        retStatus = {
+                            status: 200,
+                        };
+                    }
+
+
+                }).catch((err) => {
+
+                    console.error("Athi River 5");
+                    if (err instanceof CustomError) {
+                        console.error(err);
+
+                        console.error("Athi River 6");
+                        return err.infoObj;
+                    } else {
+                        console.error(err);
+
+                        retStatus = {
+                            description: `Error! Failed to look up the drug in the database`,
+                            status: 500,
+                        };
+                    }
+
+                });
+
+            }).catch((err) => {
+                if (err instanceof CustomError) {
+
+                    retStatus = err.infoObj;
+
+                    console.error(err);
+                } else {
+                    console.error(err);
+
+                    retStatus = {
+                        description: `Error! Failed to load the resource ${this.checkForUndefined.name}`,
+                        status: 500,
+                    };
                 }
-
             });
 
-            // console.log("found drugs ->", drugs);
+            console.error("returning => ", retStatus);
+            return (async () => {
+                return retStatus;
+            })();
 
-            if (!_.isEmpty(drugs)) {
 
-                retStatus = {
-                    description: "Error! The drug already exists",
-                    flagStatus: true,
-                    status: 400,
-                };
-            } else {
-                // the description is success since it didn't find any drug with the same drug info
-                // hence the flag status' value and the status
-                retStatus = {
-                    description: "success",
-                    status: 200,
-                };
-            }
         } catch (err) {
 
-            console.log(err);
+            console.error("Athi River 7");
+            if (err instanceof CustomError) {
+                console.error(err);
+                // console.error(err.date)
 
-            retStatus = {
-                description: "Error! Failed to check all drugs in the database",
-                status: 500,
-            };
+                console.error("Athi River 8");
+                retStatus = err.infoObj;
+
+            } else {
+                console.error("Athi River 9");
+                console.log(err);
+
+                retStatus = {
+                    description: "Error! Failed to check all drugs in the database",
+                    status: 500,
+                };
+            }
+
+            return retStatus;
+
         }
-        // console.log("retStatus => ", retStatus);
-        return retStatus;
     },
 
     /**
@@ -173,79 +285,86 @@ module.exports = {
         });
     },
 
-    async checkIfDrugExistsNearMatch(drugInfo) {
+    checkIfDrugExistsNearMatch(drugInfo) {
 
         let retObject;
 
-        try {
-            const drugExistsResult = await this.checkIfDrugExists(drugInfo);
-            // then(async (drugExitsResult) => {
+        const drugExistsResult = (async () => {
+            return await this.checkIfDrugExists(drugInfo);
+        })();
+        // then((drugExistsResult) => {
+        console.error("The value of drugExists -> ",drugExistsResult);
 
-            if (!(drugExistsResult.status >= 200 || drugExistsResult.status <= 399)) {
+        console.log("out here");
 
-                try {
-                    const drugs = await Drug.findAll({
-                        where: {
-                            name: drugInfo.name,
-                            doseForm: drugInfo.doseForm,
-                            strength: drugInfo.strength,
-                            issueUnit: drugInfo.issueUnit,
-                            expiryDate: drugInfo.expiryDate,
-                        }
-                    });
+        if (!(async () => {
+            return (drugExistsResult.status >= 200 || drugExistsResult.status <= 399);
+        })()
+        ) {
 
-                    if (!_.isEmpty(drugs)) {
+            Drug.findAll({
+                where: {
+                    name: drugInfo.name,
+                    doseForm: drugInfo.doseForm,
+                    strength: drugInfo.strength,
+                    issueUnit: drugInfo.issueUnit,
+                    expiryDate: drugInfo.expiryDate,
+                }
+            }).then((drugs) => {
+                if (drugs.length) {
 
-                        console.error(drugs);
-                        retObject = {
-                            description: "Error! The drug already exists!" +
-                                " The drug details match a drug in the database except for the level" +
-                                " of use and unit price.",
-                            status: 400,
-                        };
-
-                        return retObject;
-                    } else {
-                        // the description is success since it didn't find any drug with the same drug info
-                        // hence the flag status' value and the status
-                        retObject = drugExistsResult;
-
-                        return retObject;
-                    }
-                } catch (e) {
-                    console.error(e);
-
+                    console.error(drugs);
                     retObject = {
-                        description: "Error! Failed to collect all the drugs from the database",
-                        flagStatus: false,
-                        status: 500,
+                        description: "Error! The drug already exists!" +
+                            " The drug details match a drug in the database except for the level" +
+                            " of use and unit price.",
+                        status: 400,
                     };
+
+                    return retObject;
+                } else {
+                    // the description is success since it didn't find any drug with the same drug info
+                    // hence the flag status' value and the status
+                    retObject = drugExistsResult;
+
                     return retObject;
                 }
-            } else if (drugExistsResult.status >= 200 || drugExistsResult.status <= 399) {
-                retObject = drugExistsResult;
-
-                return retObject;
-            } else {
+            }).catch((err) => {
+                console.error(err);
 
                 retObject = {
-                    description: "success",
-                    status: 200,
+                    description: "Error! Failed to collect all the drugs from the database",
+                    flagStatus: false,
+                    status: 500,
                 };
-
                 return retObject;
-            }
-        } catch (err) {
-            console.error(err);
+            });
+        } else if (drugExistsResult.status >= 200 || drugExistsResult.status <= 399) {
+            retObject = drugExistsResult;
+
+            return retObject;
+        } else {
 
             retObject = {
-                description: "Error! Failed to load resource 'checkIfDrugExists()'",
-                flagStatus: false,
-                status: 500,
+                description: "success",
+                status: 200,
             };
 
             return retObject;
         }
+//     }
+// ).
+// catch((err) => {
+//     console.error(err);
+//
+//     retObject = {
+//         description: "Error! Failed to load resource 'checkIfDrugExists()'",
+//         flagStatus: false,
+//         status: 500,
+//     };
+
+        return retObject;
+// });
     },
 
     trapQuantityAttribute(requestBody) {
@@ -262,4 +381,5 @@ module.exports = {
         }
     }
 
-};
+}
+;

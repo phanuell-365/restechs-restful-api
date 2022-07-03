@@ -31,6 +31,7 @@ const salesIdRoutes = require("./routes/sales/sales.id.routes");
 
 app.use(bodyParser.urlencoded({extended: true}));
 app.use(express.json());
+app.use(bodyParser.json());
 
 
 // use routes

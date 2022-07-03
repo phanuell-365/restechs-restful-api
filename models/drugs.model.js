@@ -46,12 +46,41 @@ Drug
                 notNull: {
                     msg: "The dose form of the drug cannot be null",
                 },
-                isIn: {
-                    args: data.validDrugForms,
-                    msg: (function () {
+                // isIn: {
+                //     args: data.validDrugForms,
+                //     msg: (function () {
+                //
+                //         return `The dose form can only be one of these (${data.validDrugForms.toString()})`;
+                //     })()
+                // },
+                isDoseFormValid(value) {
 
-                        return `The dose form can only be one of these (${data.validDrugForms.toString()})`;
-                    })()
+                    const newDoseFormValue = String(value).toLowerCase();
+
+                    const newValidDoseFormsArr = [];
+
+                    const validDrugForms = [...data.validDrugForms];
+
+                    let foundDoseForm = false;
+
+                    validDrugForms.forEach((doseForm) => {
+                        newValidDoseFormsArr.push(doseForm.toLowerCase());
+                    });
+
+                    if (!newValidDoseFormsArr.includes(newDoseFormValue)) {
+
+                        for (const newDoseForm of newValidDoseFormsArr) {
+                            if (newDoseFormValue.includes(newDoseForm)) {
+                                foundDoseForm = true;
+                                break;
+                            }
+                        }
+
+                        if (!foundDoseForm) {
+                            throw new Error(`The dose form can only be one of these (${data.validDrugForms.toString()})`);
+                        }
+
+                    }
                 }
             }
         },
@@ -76,6 +105,9 @@ Drug
                         throw new Error(errorDescription);
                     }
                 },
+                notNull: {
+                    msg: "The drug strength should not be null",
+                }
             }
         },
 
@@ -133,12 +165,20 @@ Drug
                         throw new Error(errorDescription);
                     } else {
 
-                        const estimatedIssueUnit = String(this.doseForm).slice(0, 3).toLowerCase();
+                        const purifiedDoseForm = ((doseForm) => {
+
+                            const newDoseForm = String(doseForm);
+
+                            const escapeCharPos = newDoseForm.indexOf("-");
+
+                            return newDoseForm.slice(escapeCharPos, 1);
+                        })(this.doseForm);
+
+                        const estimatedIssueUnit = String(purifiedDoseForm).slice(0, 4).toLowerCase();
 
                         if (!newVal.toLowerCase().includes(estimatedIssueUnit)) {
 
-                            // console.log("The newVal value -> ", newVal.toLowerCase(), "The estimated issue unit -> ", estimatedIssueUnit);
-                            const errorDescription = `The issue unit should at least match the dose form ${this.doseForm}`;
+                            const errorDescription = `The issue unit should at least match the dose form ${this.doseForm}, The estimated issue unit ${estimatedIssueUnit}`;
 
                             throw new Error(errorDescription);
                         }
@@ -171,7 +211,8 @@ Drug
             validate: {
                 isNumeric: {
                     msg: "The quantity should be an integer",
-                }
+                },
+                notNull: "The quantity should not be null"
             }
         },
 
