@@ -53,7 +53,7 @@ class DrugMiddlewares {
 
                         if (value === undefined || value === null || !value) {
 
-                            console.log(`Undefined attribute -> ${key}`);
+                            console.error(`Undefined attribute -> ${key}`);
 
                             res.locals.undefinedAttributes.push(key);
 
@@ -65,12 +65,12 @@ class DrugMiddlewares {
 
                             res.locals.validDrugValuesMap.set(key, value);
                         }
-                    }).catch(next);
-
+                    })
+                        .catch(next);
                 });
-
                 next();
-            }).catch(next);
+            })
+                .catch(next);
         } else {
             next();
         }
@@ -86,9 +86,11 @@ class DrugMiddlewares {
      */
     static checkIfDrugExists(req, res, next) {
 
-        console.log("Checking if the drug info inside the request body match a drug that exists ...");
 
         if (res.req.method !== "GET") {
+
+            console.log("Checking if the drug info inside the request body match a drug that exists ...");
+
             Drug.findAll({
                 where: {
                     name: req.body.name,
@@ -161,9 +163,11 @@ class DrugMiddlewares {
     static extractValidDrugInfo(req, res, next) {
 
         if (res.req.method !== "GET") {
-            console.log("Extracting valid drug info ...");
+
 
             if (res.locals.validDrugValuesMap) {
+                console.log("Extracting valid drug info ...");
+
                 console.log(res.locals.validDrugValuesMap);
 
                 res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());

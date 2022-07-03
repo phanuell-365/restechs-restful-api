@@ -5,44 +5,67 @@
 const Supplier = require("../../models/suppliers.model");
 
 module.exports = {
-    getSuppliers(req, res) {
-        Supplier.findAll().then((suppliers) => {
-            res.json(suppliers);
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error! Failed to load all suppliers",
-                err,
-            });
-        });
+
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    getSuppliers(req, res, next) {
+        Supplier.findAll()
+            .then((suppliers) => {
+
+                console.log(res.locals);
+
+                suppliers.forEach(supplier => console.log(supplier.toJSON()));
+
+                res.status(200).json(suppliers);
+
+            })
+            .catch(next);
     },
 
-    postSuppliers(req, res) {
-        const {name, email, contact} = req.body;
+    /**
+     *
+     * @param req
+     * @param res
+     * @param next
+     */
+    postSuppliers(req, res, next) {
 
-        if (!name || !email || !contact) {
-            res.json({
-                errMsg: "Error! Not all fields were filled",
-                body: req.body,
-            });
+        if (res.locals.validSupplierInfo) {
+
+            const validSupplierInfo = res.locals.validSupplierInfo;
+
+            Supplier.create(validSupplierInfo)
+                .then((supplier) => {
+
+                    if (!res.locals.supplierExists) {
+
+                        return supplier.save();
+                    } else {
+
+                        res.status(400).json({
+                            description: `Error! The supplier with the data ${Object.values(req.body)} already exists`,
+                        });
+                    }
+                })
+                .then((supplier) => {
+
+
+                    console.log("Successfully created the supplier ->", supplier.toJSON());
+
+                    res.status(201).json({
+                        description: "Successfully added the supplier into the database",
+                    });
+                })
+                .catch(next);
+
         } else {
-            Supplier.create({
-                name,
-                email,
-                contact,
-            }).then((supplier) => {
-                return supplier.save();
-            }).then((supplier) => {
-                return supplier;
-            }).then((supplier) => {
-                res.json({
-                    msg: "Successfully added the supplier.",
-                    supplier,
-                });
-            }).catch((err) => {
-                res.json({
-                    errMsg: "Error! Failed to find the supplier",
-                    err,
-                });
+
+            res.status(500).json({
+                description: "The Server encountered an error while extracting valid supplier info!"
             });
         }
     },

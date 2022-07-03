@@ -15,7 +15,7 @@ module.exports = {
      * @param res The response object
      * @param next
      */
-    get(req, res, next) {
+    getDrugs(req, res, next) {
         Drug.findAll()
             .then((drugs) => {
 
@@ -23,12 +23,12 @@ module.exports = {
 
                 drugs.forEach(drug => console.log(drug.toJSON()));
 
-                if (res.headersSent) {
-                    console.log("Aah! Shit! Headers been sent");
-                    // next(err);
-                } else {
-                    console.log("Oh! Ah! Not Yet Still");
-                }
+                // if (res.headersSent) {
+                //     console.log("Aah! Shit! Headers been sent");
+                //     // next(err);
+                // } else {
+                //     console.log("Oh! Ah! Not Yet Still");
+                // }
 
                 res.status(200).json(drugs);
 
@@ -42,7 +42,7 @@ module.exports = {
      * @param res The response object
      * @param next
      */
-    post(req, res, next) {
+    postDrugs(req, res, next) {
 
         if (res.locals.validDrugInfo) {
 
@@ -54,10 +54,13 @@ module.exports = {
                     if (!res.locals.drugExists) {
 
                         return drug.save();
+                    } else {
+
+                        res.status(400).json({
+                            description: `Error! The drug with the data ${Object.values(req.body)} already exists`,
+                        });
+
                     }
-                    res.status(400).json({
-                        description: `Error! The drug with the data ${Object.values(req.body)} already exists`,
-                    });
 
                 })
                 .then((drug) => {
@@ -70,13 +73,22 @@ module.exports = {
 
                 })
                 .catch(next);
+        } else {
+
+            res.status(500).json({
+                description: "The Server encountered an error while extracting valid drug info!",
+            });
         }
     },
 
 
 // TODO: Change the logic for deletion to cancellation
 
-    delete(req, res) {
+    /**
+     * @param {string|exports.delete} req
+     * @param {function(*, *): void} res
+     */
+    deleteDrugs(req, res) {
 
         Drug.findAll().then((drugs) => {
 
