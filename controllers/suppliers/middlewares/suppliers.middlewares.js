@@ -20,7 +20,7 @@ class SuppliersMiddlewares {
                 res.locals.undefinedAttributes = [];
                 res.locals.validSupplierValuesMap = new Map();
 
-                Object.entries(newSupplierObj).forEach((([key, value]) => {
+                Object.entries(newSupplierObj).forEach(([key, value]) => {
 
                     Promise.resolve().then(() => {
 
@@ -40,7 +40,7 @@ class SuppliersMiddlewares {
 
                     })
                         .catch(next);
-                }));
+                });
                 next();
             })
                 .catch(next);
@@ -169,6 +169,8 @@ class SuppliersMiddlewares {
         if (res.req.method !== "GET") {
 
             console.log("Extracting valid supplier info ...");
+
+            console.log("The valid supplier values inside extractValidSupplierInfo ", res.locals.validSupplierValuesMap);
 
             if (res.locals.validSupplierValuesMap) {
 

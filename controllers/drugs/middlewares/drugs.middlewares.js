@@ -14,17 +14,17 @@ class DrugMiddlewares {
 
                 console.log("Checking if quantity attribute was passed in request body ...");
 
-                const reqBodyKeys = new Array(Object.keys(req.body));
+                const reqBodyKeys = Object.keys(req.body);
 
-                const filteredVal = reqBodyKeys.filter((key) => {
+                // console.log("The keys sent inside the request object -> ", reqBodyKeys);
 
-                    return key.toString() === "quantity";
-
-                });
-
-                if (filteredVal.length) {
+                if (reqBodyKeys.includes("quantity")) {
 
                     res.locals.isQuantityPassed = true;
+                    throw new CustomError({
+                        description: "The quantity is a computed attributed, it may not be set",
+                        status: 400,
+                    }, "The quantity is a computed attributed, it may not be set");
 
                 } else {
                     res.locals.isQuantityPassed = false;
@@ -39,7 +39,9 @@ class DrugMiddlewares {
 
     static checkForUndefined(req, res, next) {
         if (res.req.method !== "GET") {
+
             Promise.resolve().then(() => {
+
                 console.log("Checking for undefined values in the request body ...");
 
                 const newObj = Object(req.body);
@@ -63,12 +65,21 @@ class DrugMiddlewares {
                             }, `The value of ${key} is null`);
                         } else {
 
+                            // console.log("The key to add ", key, "The valid drug value map e, res.locals.validDrugValuesMap value to add ", value);;
                             res.locals.validDrugValuesMap.set(key, value);
+                            // console.log("The valid drug value map after adding ", res.locals.validDrugValuesMap);
                         }
                     })
                         .catch(next);
                 });
-                next();
+
+                Promise.resolve().then(() => {
+                    // console.log("The final value of valid drug value map after adding all the attributes => ", res.locals.validDrugValuesMap);
+
+                    next();
+                });
+
+
             })
                 .catch(next);
         } else {
@@ -164,18 +175,22 @@ class DrugMiddlewares {
 
         if (res.req.method !== "GET") {
 
+            Promise.resolve().then(() => {
+                if (res.locals.validDrugValuesMap) {
+                    console.log("Extracting valid drug info ...");
 
-            if (res.locals.validDrugValuesMap) {
-                console.log("Extracting valid drug info ...");
+                    // console.log("The value of valid drug value map ", res.locals.validDrugValuesMap);
+                    console.log(res.locals.validDrugValuesMap);
 
-                console.log(res.locals.validDrugValuesMap);
+                    res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());
 
-                res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());
+                    console.log("Creating a new valid object ...");
+                    console.log("The new valid object ->", res.locals.validDrugInfo);
+                }
+                next();
+            }).catch(next);
 
-                console.log("Creating a new valid object ...");
-                console.log("The new valid object ->", res.locals.validDrugInfo);
-            }
-            next();
+
         } else {
             next();
         }

@@ -23,13 +23,6 @@ module.exports = {
 
                 drugs.forEach(drug => console.log(drug.toJSON()));
 
-                // if (res.headersSent) {
-                //     console.log("Aah! Shit! Headers been sent");
-                //     // next(err);
-                // } else {
-                //     console.log("Oh! Ah! Not Yet Still");
-                // }
-
                 res.status(200).json(drugs);
 
             })
@@ -48,12 +41,26 @@ module.exports = {
 
             const validDrugInfo = res.locals.validDrugInfo;
 
-            Drug.create(validDrugInfo)
+            console.log("Valid drug info to add into the database => ", validDrugInfo);
 
-                .then((drug) => {
-                    if (!res.locals.drugExists) {
+            Drug.findOrCreate({
+                where: {
+                    name: req.body.name,
+                    doseForm: req.body.doseForm,
+                    strength: req.body.strength,
+                    issueUnit: req.body.issueUnit,
+                    expiryDate: req.body.expiryDate,
+                }, defaults: validDrugInfo,
+            })
+                .then(([drug, created]) => {
 
-                        return drug.save();
+                    if (created) {
+
+                        console.log(`Successfully created the drug and added it into the database -> ${drug.toJSON()}`);
+
+                        res.status(200).json({
+                            description: "Successfully created the drug and added it into the database",
+                        });
                     } else {
 
                         res.status(400).json({
@@ -61,15 +68,6 @@ module.exports = {
                         });
 
                     }
-
-                })
-                .then((drug) => {
-
-                    console.log("Successfully created the drug ->", drug.toJSON());
-
-                    res.status(201).json({
-                        description: "Successfully added the drug into the database",
-                    });
 
                 })
                 .catch(next);

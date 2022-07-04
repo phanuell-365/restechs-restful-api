@@ -12,7 +12,7 @@ const CustomError = require("../../error/CustomError.error");
 
 
 router.use("/api/suppliers", middlewares.checkForUndefined);
-router.use("/api/suppliers", middlewares.checkIfSupplierExists);
+// router.use("/api/suppliers", middlewares.checkIfSupplierExists);
 router.use("/api/suppliers", middlewares.checkIfSupplierShareContact);
 router.use("/api/suppliers", middlewares.checkIfSupplierShareEmail);
 router.use("/api/suppliers", middlewares.extractValidSupplierInfo);

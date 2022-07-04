@@ -38,27 +38,27 @@ module.exports = {
 
             const validSupplierInfo = res.locals.validSupplierInfo;
 
-            Supplier.create(validSupplierInfo)
-                .then((supplier) => {
+            console.log(validSupplierInfo);
 
-                    if (!res.locals.supplierExists) {
+            Supplier.findOrCreate({
+                where: {
+                    name: req.body.name,
+                },
+                defaults:validSupplierInfo,
+            })
+                .then(([supplier, created]) => {
 
-                        return supplier.save();
+                    if (created) {
+                        console.log("Successfully created the supplier ->", supplier.toJSON());
+                        res.status(201).json({
+                            description: "Successfully added the supplier into the database",
+                        });
                     } else {
-
                         res.status(400).json({
-                            description: `Error! The supplier with the data ${Object.values(req.body)} already exists`,
+                            description: "The supplier already exists.",
                         });
                     }
-                })
-                .then((supplier) => {
 
-
-                    console.log("Successfully created the supplier ->", supplier.toJSON());
-
-                    res.status(201).json({
-                        description: "Successfully added the supplier into the database",
-                    });
                 })
                 .catch(next);
 

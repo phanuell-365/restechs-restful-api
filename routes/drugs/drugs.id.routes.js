@@ -4,11 +4,18 @@
 
 const router = require("express").Router();
 
-const {getDrugsId, putDrugsId, patchDrugsId, deleteDrugsId} = require("../../controllers/drugs/drugs.id.controllers");
+const drugsMiddlewares = require("../../controllers/drugs/middlewares/drugs.middlewares");
 
-router.get("/drugs/:id", getDrugsId);
-router.put("/drugs/:id", putDrugsId);
-router.patch("/drugs/:id", patchDrugsId);
-router.delete("/drugs/:id", deleteDrugsId);
+const controllers = require("../../controllers/drugs/drugs.id.controllers");
+
+router.use("/api/drugs/:id", drugsMiddlewares.checkIfQuantityAttrPassed);
+router.use("/api/drugs/:id", drugsMiddlewares.checkForUndefined);
+
+
+router.route("/api/drugs/:id")
+    .get(controllers.getDrugsId)
+    .put(controllers.putDrugsId)
+    .patch(controllers.patchDrugsId)
+    .delete(controllers.deleteDrugsId);
 
 module.exports = router;
