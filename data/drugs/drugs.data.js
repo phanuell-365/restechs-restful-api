@@ -20,6 +20,10 @@ module.exports = {
         "OR Pel", "VAG Tab", "ORO Sol", "REC Gel", "CRE",
         "OIN", "LOT", "PAS", "Tro APP", "EYE Dro", "Tes STR",
         "GEL", "INJ (IV)", "COP"
+    ],
+
+    drugAttributes: [
+        "name", "doseForm", "strength", "levelOfUse", "issueUnit", "issueUnitPrice", "expiryDate", "therapeuticCategory",
     ]
 
 };

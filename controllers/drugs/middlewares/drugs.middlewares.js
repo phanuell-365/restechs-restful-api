@@ -108,6 +108,7 @@ class DrugMiddlewares {
                     doseForm: req.body.doseForm,
                     strength: req.body.strength,
                     levelOfUse: req.body.levelOfUse,
+                    therapeuticCategory : req.body.therapeuticCategory,
                     issueUnit: req.body.issueUnit,
                     issueUnitPrice: req.body.issueUnitPrice,
                     expiryDate: req.body.expiryDate,
@@ -115,14 +116,22 @@ class DrugMiddlewares {
 
             }).then((drugs) => {
 
+                // add the found drugs into res.locals
+
+                res.locals.existentDrugs = Array(drugs);
+
+                console.log("Printing res.locals.existentDrugs ->", drugs);
+
+                console.log("Printing found drugs -> ", drugs);
+
                 if (drugs.length) {
 
                     res.locals.drugExists = true;
-
-                    throw new CustomError({
-                        description: `The drug info entered already matches an existing one${JSON.stringify(drugs[0].toJSON())}`,
-                        status: 400,
-                    }, `The drug info entered already matches an existing one \n${drugs[0].toJSON()}`);
+                    //
+                    // throw new CustomError({
+                    //     description: `The drug info entered already matches an existing one${JSON.stringify(drugs[0].toJSON())}`,
+                    //     status: 400,
+                    // }, `The drug info entered already matches an existing one \n${drugs[0].toJSON()}`);
 
                 } else {
 

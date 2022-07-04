@@ -17,9 +17,8 @@ module.exports = {
      */
     getDrugs(req, res, next) {
         Drug.findAll()
-            .then((drugs) => {
 
-                console.log(res.locals);
+            .then((drugs) => {
 
                 drugs.forEach(drug => console.log(drug.toJSON()));
 

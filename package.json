@@ -1,37 +1,33 @@
 {
   "name": "restechs-restful-api",
   "version": "1.0.0",
-  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "nodemon server.js"
+    "serve": "nodemon ./bin/www",
+    "start": "node ./bin/www.js"
   },
   "dependencies": {
-    "bcryptjs": "^2.4.3",
     "body-parser": "^1.20.0",
     "cookie-parser": "^1.4.6",
+    "cors": "^2.8.5",
+    "csurf": "^1.11.0",
+    "debug": "^2.6.9",
     "dotenv": "^16.0.1",
-    "ejs": "^3.1.8",
     "express": "^4.18.1",
-    "express-session": "^1.17.3",
-    "handlebars": "^4.7.7",
-    "lodash": "^4.17.21",
+    "http-errors": "^2.0.0",
     "method-override": "^3.0.0",
-    "md5": "^2.3.0",
-    "mongodb": "^4.6.0",
-    "mongoose": "^6.3.4",
-    "multer": "^1.4.4",
+    "morgan": "^1.10.0",
     "mysql2": "^2.3.3",
-    "nodemon": "^2.0.16",
-    "passport": "^0.5.3",
-    "pdfkit": "^0.13.0",
-    "pug": "^3.0.2",
-    "sequelize": "^6.19.2",
+    "node-fetch": "^3.2.6",
+    "passport": "^0.6.0",
+    "rxjs": "^7.5.5",
+    "sequelize": "^6.21.2",
     "uuid": "^8.3.2"
   },
+  "description": "The restechs rest api for the ResTechs Online Pharmaceutical Management System",
+  "main": "server.js",
+  "bin": {
+    "restechs-restful-api": "bin/www.js"
+  },
   "author": "Phanuel Kidakwa",
-  "license": "ISC",
-  "keywords": [],
-  "devDependencies": {},
-  "description": ""
+  "license": "ISC"
 }

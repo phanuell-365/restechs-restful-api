@@ -6,133 +6,57 @@ const Drug = require("../../models/drugs.model");
 const sources = require("../../src/drugs/drugs.src");
 
 module.exports = {
-    getDrugsId(req, res) {
+
+    getDrugById(req, res, next) {
+
+        // console.log("GET /api/drugs/:id");
 
         const drugId = req.params.id;
 
-        Drug.findByPk(drugId).then((drug) => {
+        Drug.findByPk(drugId)
 
-            res.status(200).json(drug);
+            .then((drug) => {
 
-        }).catch(err => {
+                console.log(drug.toJSON());
 
-            console.error(err);
+                res.status(200).json(drug);
 
-            res.status(500).json({
-                errMsg: "Error! Failed to read the drug from the database"
-            });
-
-        });
+            }).catch(next);
     },
 
-    async putDrugsId(req, res) {
+    putDrugById(req, res, next) {
 
         const drugId = req.params.id;
 
-        const {
-            name,
-            doseForm,
-            strength,
-            levelOfUse,
-            therapeuticCategory,
-            issueUnit,
-            issueUnitPrice,
-            expiryDate,
-        } = req.body;
+        if (res.locals.validDrugInfo) {
 
-        const drug = await Drug.findByPk(drugId);
+            const validDrugInfo = res.locals.validDrugInfo;
 
-        // make an array of required fields
+            Drug.findByPk(drugId)
 
-        const requiredFields = ["name", "doseForm", "strength", "levelOfUse", "therapeuticCategory", "issueUnit", "issueUnitPrice", "expiryDate"];
+                .then((drug) => {
 
-        // cache the result of checking if the required fields are present in the request body
+                    console.log("Previous drug info -> ", drug.toJSON());
 
-        const fieldPresResult = sources.checkFieldsArePresent(requiredFields, req.body);
+                    return drug.update(validDrugInfo);
 
-        // cache the result of checking if all the requested fields are filled
+                })
+                .then((drug) => {
 
-        const fieldNullResult = sources.checkIfFieldsAreNull(req.body);
+                    console.log("Successfully updated the drug", drug.toJSON());
 
-        // cache the result of validating the level of use of the new drug details
+                    res.status(200).json({
+                        description: `Successfully updated the drug ${drug.toJSON()}`,
+                    });
+                })
 
-        const validLevelOfUseResult = Drug.validateLevelOfUse(levelOfUse);
-
-        // cache the result of validating the issue unit price of the new drug details
-
-        const validIssueUnitPriceResult = Drug.validateIssueUnitPrice(issueUnitPrice);
-
-        // cache the result of validating the dose form and the issue unit
-
-        const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(doseForm, issueUnit);
-
-        if (!fieldPresResult.flagStatus) {
-
-            res.status(fieldPresResult.status).json(fieldPresResult);
-
-        } else if (!fieldNullResult.flagStatus) {
-
-            res.status(fieldNullResult.status).json(fieldNullResult);
-
-        } else if (!validLevelOfUseResult.flagStatus) {
-
-            res.status(validLevelOfUseResult.status).json(validLevelOfUseResult);
-
-        } else if (!validIssueUnitPriceResult.flagStatus) {
-
-            res.status(validIssueUnitPriceResult.status).json(validIssueUnitPriceResult);
-
-        } else if (!validateDoseFrmIssUnitRes.flagStatus) {
-
-            res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
+                .catch(next);
 
         } else {
 
-            try {
-                // check if the drug data to update already exists
-
-                const drugExistsResult = await sources.checkIfDrugExists(req.body);
-
-                if (drugExistsResult.flagStatus) {
-
-                    res.status(drugExistsResult.status).json(drugExistsResult);
-
-                } else {
-
-                    try {
-
-                        await drug.update({
-                            name,
-                            doseForm,
-                            strength,
-                            levelOfUse,
-                            therapeuticCategory,
-                            issueUnit,
-                            issueUnitPrice,
-                            expiryDate,
-                        });
-
-                    } catch (err) {
-
-                        console.error(err);
-
-                        res.status(500).json({
-                            description: "Error! Failed to update the drug in the database",
-                            flagStatus: false,
-                            status: 500,
-                        });
-                    }
-                }
-            } catch (err) {
-
-                console.error(err);
-
-                res.status(500).json({
-                    description: "Error! Failed to load the checkIfDrugExistsNearMatch() resource",
-                    flagStatus: false,
-                    status: 500,
-                });
-            }
+            res.status(500).json({
+                description: "The Server encountered an error while extracting valid drug info!",
+            });
         }
 
     },
@@ -205,9 +129,9 @@ module.exports = {
             await drug.update(drugContent);
 
             res.status(200).json({
-                description : "Successfully updated the drug data in the database",
-                flagStatus : true,
-                status : 200,
+                description: "Successfully updated the drug data in the database",
+                flagStatus: true,
+                status: 200,
             });
 
         } catch (err) {

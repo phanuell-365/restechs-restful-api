@@ -17,6 +17,7 @@ router.use("/api/drugs", middlewares.checkForUndefined);
 // router.use("/api/drugs", middlewares.checkIfDrugExistsNearMatch);
 router.use("/api/drugs", middlewares.extractValidDrugInfo);
 //         router.use("/drugs",
+
 router.route("/api/drugs")
     .get(controllers.getDrugs)
     .post(controllers.postDrugs)

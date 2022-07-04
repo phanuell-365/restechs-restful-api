@@ -4,18 +4,34 @@
 
 const router = require("express").Router();
 
-const drugsMiddlewares = require("../../controllers/drugs/middlewares/drugs.middlewares");
+// const drugsMiddlewares = require("../../controllers/drugs/middlewares/drugs.middlewares");
+const middlewares = require("../../controllers/drugs/middlewares/drugs.id.middlewares");
 
 const controllers = require("../../controllers/drugs/drugs.id.controllers");
+const CustomError = require("../../error/CustomError.error");
 
-router.use("/api/drugs/:id", drugsMiddlewares.checkIfQuantityAttrPassed);
-router.use("/api/drugs/:id", drugsMiddlewares.checkForUndefined);
-
+router.use("/api/drugs/:id", middlewares.checkIfAllAttrArePresent);
+router.use("/api/drugs/:id", middlewares.checkIfQuantityAttrPassed);
+router.use("/api/drugs/:id", middlewares.checkIfIdAttrPassed);
+router.use("/api/drugs/:id", middlewares.checkForUndefined);
+router.use("/api/drugs/:id", middlewares.extractValidDrugInfo);
+// router.use("/api/drugs/:id", middlewares.checkIfUpdatedDrugInfoMatchesExistent);
 
 router.route("/api/drugs/:id")
-    .get(controllers.getDrugsId)
-    .put(controllers.putDrugsId)
+    .get(controllers.getDrugById)
+    .put(controllers.putDrugById)
     .patch(controllers.patchDrugsId)
     .delete(controllers.deleteDrugsId);
+
+router.use("/api/drugs/:id", (err, req, res, next) => {
+    console.error(err.stack);
+
+    if (err instanceof CustomError) {
+        res.status(err.infoObj.status).json(err.infoObj);
+    } else {
+        res.status(500).json(err);
+    }
+
+});
 
 module.exports = router;
