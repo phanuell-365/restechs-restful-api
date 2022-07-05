@@ -6,12 +6,13 @@ const Drug = require("../../../models/drugs.model");
 const CustomError = require("../../../error/CustomError.error");
 const DrugMiddlewares = require("../../drugs/middlewares/drugs.middlewares");
 const {drugAttributes} = require("../../../data/drugs/drugs.data");
+const sources = require("../../../src/drugs/drugs.src");
 
 class DrugsIdMiddlewares extends DrugMiddlewares {
 
     static checkIfAllAttrArePresent(req, res, next) {
 
-        if (res.req.method !== "GET" && (res.req.method === "PUT" || res.req.method === "PATCH")) {
+        if (req.method !== "GET" && (res.req.method === "PUT" || res.req.method === "PATCH")) {
             Promise.resolve().then(() => {
 
                 let requestDrugAttributes = Object.keys(req.body).sort();
@@ -22,7 +23,7 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
                 console.log("The valid drug attributes -> ", drugAttributes.sort());
 
                 drugAttributes.sort();
-                    drugAttributes.forEach(async (drugAttribute) => {
+                drugAttributes.forEach(async (drugAttribute) => {
 
                     requestDrugAttributes = requestDrugAttributes.filter((requestDrugAttribute) => drugAttribute === requestDrugAttribute);
 
@@ -44,7 +45,7 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
 
     static checkIfIdAttrPassed(req, res, next) {
 
-        if (res.req.method !== "GET") {
+        if (req.method !== "GET") {
 
             Promise.resolve().then(() => {
 
@@ -78,7 +79,7 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
 
     static checkIfUpdatedDrugInfoMatchesExistent(req, res, next) {
 
-        if (res.req.method !== "GET" && (res.req.method === "PUT" || res.req.method === "PATCH")) {
+        if (req.method !== "GET" && (res.req.method === "PUT" || res.req.method === "PATCH")) {
 
             Promise.resolve().then(() => {
 
@@ -124,6 +125,70 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
             next();
         }
     }
+
+    static checkForDuplicateDrugData(req, res, next) {
+
+        if (req.method !== "GET") {
+
+            Promise.resolve()
+
+                .then(async () => {
+
+                    const drugId = req.params.id;
+
+                    const drugAttributes = ["id", "name", "doseForm", "strength", "levelOfUse"];
+
+                    try {
+                        const allDrugsAttributes = await sources.getDrugsAttributes(drugAttributes);
+
+                        const requestDrugInfoValues = await sources.getDrugAttributes(drugId, drugAttributes);
+
+                        console.log("The value of allDrugsAttributes ->", allDrugsAttributes);
+
+                        for (const drugAttributeVal of allDrugsAttributes) {
+
+                            console.log("Checking if the id ", drugAttributeVal.id, " is same as ", requestDrugInfoValues.id);
+
+                            if (drugAttributeVal.id !== requestDrugInfoValues.id) {
+
+                                throw new CustomError({
+                                    description: "The update request contains drug data that match a drug in the database",
+                                }, "The update request contains drug data that match a drug in the database");
+
+                            } else if (drugAttributeVal.name === requestDrugInfoValues.name &&
+                                drugAttributeVal.doseForm === requestDrugInfoValues.doseForm &&
+                                drugAttributeVal.strength === requestDrugInfoValues.strength &&
+                                drugAttributeVal.levelOfUse === requestDrugInfoValues.levelOfUse &&
+                                drugAttributeVal.id !== requestDrugInfoValues.id) {
+
+                                throw new CustomError({
+                                    description: "The update request contains drug data that match a drug in the database",
+                                }, "The update request contains drug data that match a drug in the database");
+
+                            } else {
+                                break;
+                            }
+                        }
+
+                    } catch (err) {
+                        next(err);
+                    }
+
+                    next();
+
+                })
+
+
+                .catch(next);
+        } else {
+
+            next();
+
+        }
+
+
+    }
+
 }
 
 module.exports = DrugsIdMiddlewares;

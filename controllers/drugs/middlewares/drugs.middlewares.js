@@ -4,19 +4,19 @@
 
 const Drug = require("../../../models/drugs.model");
 const CustomError = require("../../../error/CustomError.error");
+const sources = require("../../../src/drugs/drugs.src");
 
 class DrugMiddlewares {
 
+
     static checkIfQuantityAttrPassed(req, res, next) {
-        if (res.req.method !== "GET") {
+        if (req.method !== "GET") {
 
             Promise.resolve().then(() => {
 
                 console.log("Checking if quantity attribute was passed in request body ...");
 
                 const reqBodyKeys = Object.keys(req.body);
-
-                // console.log("The keys sent inside the request object -> ", reqBodyKeys);
 
                 if (reqBodyKeys.includes("quantity")) {
 
@@ -38,7 +38,7 @@ class DrugMiddlewares {
     }
 
     static checkForUndefined(req, res, next) {
-        if (res.req.method !== "GET") {
+        if (req.method !== "GET") {
 
             Promise.resolve().then(() => {
 
@@ -47,38 +47,27 @@ class DrugMiddlewares {
                 const newObj = Object(req.body);
 
                 res.locals.undefinedAttributes = [];
+
                 res.locals.validDrugValuesMap = new Map();
 
                 Object.entries(newObj).forEach(([key, value]) => {
 
-                    Promise.resolve().then(() => {
+                    if (value === undefined || value === null || !value) {
 
-                        if (value === undefined || value === null || !value) {
+                        console.error(`Undefined attribute -> ${key}`);
 
-                            console.error(`Undefined attribute -> ${key}`);
+                        res.locals.undefinedAttributes.push(key);
 
-                            res.locals.undefinedAttributes.push(key);
+                        throw new CustomError({
+                            description: `The value of ${key} is null`,
+                            status: 400,
+                        }, `The value of ${key} is null`);
+                    } else {
 
-                            throw new CustomError({
-                                description: `The value of ${key} is null`,
-                                status: 400,
-                            }, `The value of ${key} is null`);
-                        } else {
-
-                            // console.log("The key to add ", key, "The valid drug value map e, res.locals.validDrugValuesMap value to add ", value);;
-                            res.locals.validDrugValuesMap.set(key, value);
-                            // console.log("The valid drug value map after adding ", res.locals.validDrugValuesMap);
-                        }
-                    })
-                        .catch(next);
+                        res.locals.validDrugValuesMap.set(key, value);
+                    }
                 });
-
-                Promise.resolve().then(() => {
-                    // console.log("The final value of valid drug value map after adding all the attributes => ", res.locals.validDrugValuesMap);
-
                     next();
-                });
-
 
             })
                 .catch(next);
@@ -86,6 +75,29 @@ class DrugMiddlewares {
             next();
         }
     }
+
+    static fetchDrugIds(req, res, next) {
+
+        return Drug.findAll()
+
+            .then((allDrugs) => {
+
+                // sources.getDrugAttribute(allDrugs[0].id, "name").then((val) => {
+                //
+                // });
+
+                res.locals.drugIds = [];
+
+                allDrugs.forEach((drug) => {
+                    res.locals.drugIds.push(drug.id);
+                });
+
+                next();
+            })
+            .catch(next);
+
+    }
+
 
     /**
      * @description Check if a drug is already present in the database
@@ -98,7 +110,7 @@ class DrugMiddlewares {
     static checkIfDrugExists(req, res, next) {
 
 
-        if (res.req.method !== "GET") {
+        if (req.method !== "GET") {
 
             console.log("Checking if the drug info inside the request body match a drug that exists ...");
 
@@ -108,7 +120,7 @@ class DrugMiddlewares {
                     doseForm: req.body.doseForm,
                     strength: req.body.strength,
                     levelOfUse: req.body.levelOfUse,
-                    therapeuticCategory : req.body.therapeuticCategory,
+                    therapeuticCategory: req.body.therapeuticCategory,
                     issueUnit: req.body.issueUnit,
                     issueUnitPrice: req.body.issueUnitPrice,
                     expiryDate: req.body.expiryDate,
@@ -182,7 +194,7 @@ class DrugMiddlewares {
 
     static extractValidDrugInfo(req, res, next) {
 
-        if (res.req.method !== "GET") {
+        if (req.method !== "GET") {
 
             Promise.resolve().then(() => {
                 if (res.locals.validDrugValuesMap) {
@@ -205,6 +217,7 @@ class DrugMiddlewares {
         }
 
     }
+
 
 }
 

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "scripts": {
     "serve": "nodemon ./bin/www",
-    "start": "node ./bin/www.js"
+    "start": "node bin/www"
   },
   "dependencies": {
     "body-parser": "^1.20.0",
@@ -14,6 +14,7 @@
     "dotenv": "^16.0.1",
     "express": "^4.18.1",
     "http-errors": "^2.0.0",
+    "lodash": "^4.17.21",
     "method-override": "^3.0.0",
     "morgan": "^1.10.0",
     "mysql2": "^2.3.3",
@@ -26,7 +27,7 @@
   "description": "The restechs rest api for the ResTechs Online Pharmaceutical Management System",
   "main": "server.js",
   "bin": {
-    "restechs-restful-api": "bin/www.js"
+    "restechs-restful-api": "bin/www"
   },
   "author": "Phanuel Kidakwa",
   "license": "ISC"

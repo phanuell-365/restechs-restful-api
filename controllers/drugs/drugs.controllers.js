@@ -3,9 +3,6 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-//
-// const sources = require("../../src/drugs/drugs.src");
-// const CustomError = require("../../error/CustomError.error");
 
 module.exports = {
 

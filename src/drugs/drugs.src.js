@@ -10,7 +10,79 @@ const _ = require("lodash");
 
 module.exports = {
 
-    getDrugAttributes() {
+    getDrugAttribute(drugId, attributeName) {
+
+        return Drug.findByPk(drugId)
+            .then((drug) => {
+
+                return {
+                    [attributeName]: drug[attributeName],
+                };
+            })
+            .catch(err => {
+                console.error(err);
+
+            });
+    },
+
+    getDrugAttributes(drugId, attributeNames) {
+
+        return Promise.resolve().then(() => {
+
+            let attrMap = new Map();
+            let attrPromiseArr = [];
+
+            attributeNames.forEach((attributeName) => {
+
+                attrPromiseArr.push(this.getDrugAttribute(drugId, attributeName));
+
+            });
+
+            return Promise.all(attrPromiseArr).then((attrObjs) => {
+
+                attrObjs.forEach((attrObj) => {
+
+                    Object.entries(attrObj).forEach(([key, value]) => {
+                        // console.log("Key -> ", key, "Value -> ", value);
+                        attrMap.set(key, value);
+                    });
+
+                });
+
+
+                return Object.fromEntries(attrMap.entries());
+            }).catch(err => console.error(err));
+
+        }).catch(err => console.error(err));
+
+
+    },
+
+    getDrugsAttributes(attributeNames) {
+
+        return Drug.findAll()
+            .then((drugs) => {
+
+                let drugAttributesArr = [];
+
+                const drugIds = [];
+
+                drugs.forEach(drug => drugIds.push(drug.id));
+
+                drugIds.forEach(drugId => {
+
+                    drugAttributesArr.push(this.getDrugAttributes(drugId, attributeNames));
+
+                });
+
+                console.log("The value of drugAttributesArr ", drugAttributesArr);
+
+                return Promise.all(drugAttributesArr);
+
+            }).catch(err => console.error(err));
+    },
+
+    getAllDrugAttributes() {
         const drugAttributes = Object.entries(Drug.getAttributes());
 
         const drugAttr = [];
@@ -293,7 +365,7 @@ module.exports = {
             return await this.checkIfDrugExists(drugInfo);
         })();
         // then((drugExistsResult) => {
-        console.error("The value of drugExists -> ",drugExistsResult);
+        console.error("The value of drugExists -> ", drugExistsResult);
 
         console.log("out here");
 
@@ -381,5 +453,4 @@ module.exports = {
         }
     }
 
-}
-;
+};
