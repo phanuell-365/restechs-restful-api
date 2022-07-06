@@ -6,7 +6,7 @@ const router = require("express").Router();
 
 const middlewares = require("../../controllers/drugs/middlewares/drugs.middlewares");
 
-const controllers = require("../../controllers/drugs/drugs.controllers");
+const handlers = require("../../controllers/drugs/drugs.controllers");
 
 const CustomError = require("../../error/CustomError.error");
 
@@ -19,9 +19,9 @@ router.use("/api/drugs", middlewares.extractValidDrugInfo);
 //         router.use("/drugs",
 
 router.route("/api/drugs")
-    .get(controllers.getDrugs)
-    .post(controllers.postDrugs)
-    .delete(controllers.deleteDrugs);
+    .get(handlers.getDrugs)
+    .post(handlers.postDrugs)
+    .delete(handlers.deleteDrugs);
 
 router.use("/api/drugs", (err, req, res, next)=> {
     console.error(err.stack);

@@ -17,8 +17,7 @@ module.exports = {
 
             .then((drugs) => {
 
-                drugs.forEach(drug => console.log(drug.toJSON()));
-
+                console.log("Displaying all drugs ...");
                 res.status(200).json(drugs);
 
             })
@@ -41,11 +40,10 @@ module.exports = {
 
             Drug.findOrCreate({
                 where: {
-                    name: req.body.name,
-                    doseForm: req.body.doseForm,
-                    strength: req.body.strength,
-                    issueUnit: req.body.issueUnit,
-                    expiryDate: req.body.expiryDate,
+                    name: validDrugInfo.name,
+                    doseForm: validDrugInfo.doseForm,
+                    strength: validDrugInfo.strength,
+                    levelOfUse: validDrugInfo.levelOfUse,
                 }, defaults: validDrugInfo,
             })
                 .then(([drug, created]) => {

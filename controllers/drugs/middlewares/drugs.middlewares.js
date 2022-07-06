@@ -67,7 +67,7 @@ class DrugMiddlewares {
                         res.locals.validDrugValuesMap.set(key, value);
                     }
                 });
-                    next();
+                next();
 
             })
                 .catch(next);
@@ -75,6 +75,34 @@ class DrugMiddlewares {
             next();
         }
     }
+
+    static extractValidDrugInfo(req, res, next) {
+
+        if (req.method !== "GET") {
+
+            Promise.resolve().then(() => {
+                if (res.locals.validDrugValuesMap) {
+                    console.log("Extracting valid drug info ...");
+
+                    // console.log("The value of valid drug value map ", res.locals.validDrugValuesMap);
+                    console.log(res.locals.validDrugValuesMap);
+
+                    res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());
+
+                    console.log("Creating a new valid object ...");
+                    console.log("The new valid object ->", res.locals.validDrugInfo);
+                }
+                next();
+            }).catch(next);
+
+
+        } else {
+            next();
+        }
+
+    }
+
+
 
     static fetchDrugIds(req, res, next) {
 
@@ -186,32 +214,6 @@ class DrugMiddlewares {
 
                 }
             }).catch(next);
-        } else {
-            next();
-        }
-
-    }
-
-    static extractValidDrugInfo(req, res, next) {
-
-        if (req.method !== "GET") {
-
-            Promise.resolve().then(() => {
-                if (res.locals.validDrugValuesMap) {
-                    console.log("Extracting valid drug info ...");
-
-                    // console.log("The value of valid drug value map ", res.locals.validDrugValuesMap);
-                    console.log(res.locals.validDrugValuesMap);
-
-                    res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());
-
-                    console.log("Creating a new valid object ...");
-                    console.log("The new valid object ->", res.locals.validDrugInfo);
-                }
-                next();
-            }).catch(next);
-
-
         } else {
             next();
         }

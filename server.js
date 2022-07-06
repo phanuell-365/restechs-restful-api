@@ -76,7 +76,7 @@ app.use(function (err, req, res, next) {
         next(err);
     }
     // render the error page
-    res.status(err.status || 500).json("The server encountered an error!");
+    res.status(err.status || 500).json(err);
 });
 
 module.exports = app;
