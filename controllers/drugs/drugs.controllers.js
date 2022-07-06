@@ -52,7 +52,7 @@ module.exports = {
 
                         console.log(`Successfully created the drug and added it into the database -> ${drug.toJSON()}`);
 
-                        res.status(200).json({
+                        res.status(201).json({
                             description: "Successfully created the drug and added it into the database",
                         });
                     } else {

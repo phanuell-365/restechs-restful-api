@@ -4,17 +4,22 @@
 
 const router = require("express").Router();
 
-const {
-    getSuppliersId,
-    putSuppliersId,
-    patchSuppliersId,
-    deleteSuppliersId
-} = require("../../controllers/suppliers/suppliers.id.controllers");
+const middlewares = require("../../controllers/suppliers/middlewares/suppliers.id.middlewares");
 
-router.get("/suppliers/:id", getSuppliersId);
-router.put("/suppliers/:id", putSuppliersId);
-router.patch("/suppliers/:id", patchSuppliersId);
-router.delete("/suppliers/:id", deleteSuppliersId);
+const handlers = require("../../controllers/suppliers/suppliers.id.controllers");
+
+router.use("/api/suppliers/:id", middlewares.checkIfIdAttrPassed);
+router.use("/api/suppliers/:id", middlewares.checkIfAllSupplierInfoPresent);
+router.use("/api/suppliers/:id", middlewares.checkForUndefined);
+router.use("/api/suppliers/:id", middlewares.checkIfSupplierShareContact);
+router.use("/api/suppliers/:id", middlewares.checkIfSupplierShareEmail);
+router.use("/api/suppliers/:id", middlewares.extractValidSupplierInfo);
+
+router.route("/api/suppliers/:id")
+    .get(handlers.getSupplierById)
+    .put(handlers.putSupplierById)
+    .patch(handlers.patchSupplierById)
+    .delete(handlers.deleteSupplierById);
 
 module.exports = router;
 

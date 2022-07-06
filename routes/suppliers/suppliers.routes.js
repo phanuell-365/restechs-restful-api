@@ -6,22 +6,20 @@ const router = require("express").Router();
 
 const middlewares = require("../../controllers/suppliers/middlewares/suppliers.middlewares");
 
-const controllers = require("../../controllers/suppliers/suppliers.controllers");
+const handlers = require("../../controllers/suppliers/suppliers.controllers");
 
 const CustomError = require("../../error/CustomError.error");
 
 
 router.use("/api/suppliers", middlewares.checkForUndefined);
-// router.use("/api/suppliers", middlewares.checkIfSupplierExists);
 router.use("/api/suppliers", middlewares.checkIfSupplierShareContact);
 router.use("/api/suppliers", middlewares.checkIfSupplierShareEmail);
 router.use("/api/suppliers", middlewares.extractValidSupplierInfo);
-// router.use("/api/suppliers", middlewares);
 
 router.route("/api/suppliers")
-    .get(controllers.getSuppliers)
-    .post(controllers.postSuppliers)
-    .delete(controllers.deleteSuppliers);
+    .get(handlers.getSuppliers)
+    .post(handlers.postSuppliers)
+    .delete(handlers.deleteSuppliers);
 
 
 router.use("/api/suppliers", (err, req, res, next) => {

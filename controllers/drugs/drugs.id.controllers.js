@@ -9,8 +9,6 @@ module.exports = {
 
     getDrugById(req, res, next) {
 
-        // console.log("GET /api/drugs/:id");
-
         const drugId = req.params.id;
 
         Drug.findByPk(drugId)
@@ -70,13 +68,14 @@ module.exports = {
 
     patchDrugsId(req, res, next) {
 
-        Promise.resolve().then(() => {
+        Promise.resolve()
+            .then(() => {
 
-            const DrugId = req.params.id;
+                const DrugId = req.params.id;
 
-            return Drug.findByPk(DrugId);
+                return Drug.findByPk(DrugId);
 
-        })
+            })
             .then((drug) => {
 
                 console.log("Previous drug info -> ", drug.toJSON());
@@ -113,11 +112,10 @@ module.exports = {
 
         const drugId = req.params.id;
 
-        Drug.findByPk(drugId).then((drug) => {
-            return drug.destroy();
-        }).then((drug) => {
-            return drug;
-        }).then((drug) => {
+        Drug.findByPk(drugId)
+            .then((drug) => {
+                return drug.destroy();
+            }).then((drug) => {
             res.json({
                 msg: "The record was deleted successfully!",
                 drug,

@@ -87,3 +87,187 @@
 //         status: parseInt(status)
 //     };
 // }
+//
+// const Drug = require("../models/drugs.model");
+// static fetchDrugIds(req, res, next) {
+//
+//     return Drug.findAll()
+//
+//         .then((allDrugs) => {
+//
+//             res.locals.drugIds = [];
+//
+//             allDrugs.forEach((drug) => {
+//                 res.locals.drugIds.push(drug.id);
+//             });
+//
+//             next();
+//         })
+//         .catch(next);
+//
+// }
+//
+//
+// /**
+//  * @description Check if a drug is already present in the database
+//  * @returns  A promise object containing the description,
+//  * flagStatus being true if the drug already exists and status
+//  * @param req
+//  * @param res
+//  * @param next
+//  */
+// static checkIfDrugExists(req, res, next) {
+//
+//
+//     if (req.method !== "GET") {
+//
+//         console.log("Checking if the drug info inside the request body match a drug that exists ...");
+//
+//         Drug.findAll({
+//             where: {
+//                 name: req.body.name,
+//                 doseForm: req.body.doseForm,
+//                 strength: req.body.strength,
+//                 levelOfUse: req.body.levelOfUse,
+//                 therapeuticCategory: req.body.therapeuticCategory,
+//                 issueUnit: req.body.issueUnit,
+//                 issueUnitPrice: req.body.issueUnitPrice,
+//                 expiryDate: req.body.expiryDate,
+//             }
+//
+//         }).then((drugs) => {
+//
+//             // add the found drugs into res.locals
+//
+//             res.locals.existentDrugs = Array(drugs);
+//
+//             console.log("Printing res.locals.existentDrugs ->", drugs);
+//
+//             console.log("Printing found drugs -> ", drugs);
+//
+//             if (drugs.length) {
+//
+//                 res.locals.drugExists = true;
+//
+//             } else {
+//
+//                 res.locals.drugExists = false;
+//                 next();
+//             }
+//
+//         }).catch(next);
+//     } else {
+//         next();
+//     }
+//
+//
+// }
+//
+// static checkIfDrugExistsNearMatch(req, res, next) {
+//
+//     console.log("Checking if the drug info inside the request body nearly matches a drug that exists ...");
+//
+//     if (res.req.method !== "GET") {
+//         Drug.findAll({
+//             where: {
+//                 name: req.body.name,
+//                 doseForm: req.body.doseForm,
+//                 strength: req.body.strength,
+//                 issueUnit: req.body.issueUnit,
+//                 expiryDate: req.body.expiryDate,
+//             }
+//         }).then((drugs) => {
+//             if (drugs.length) {
+//
+//                 res.locals.drugExists = true;
+//                 next();
+//
+//             } else {
+//
+//                 res.locals.drugExists = false;
+//
+//                 next();
+//
+//             }
+//         }).catch(next);
+//     } else {
+//         next();
+//     }
+//
+// }
+//
+
+
+// static checkIfSupplierExists(req, res, next) {
+//
+//     if (res.req.method !== "GET") {
+//
+//         console.log("Checking if the supplier info inside the request body match a supplier that exists ...");
+//
+//         Supplier.findAll({
+//             where: {
+//                 name: req.body.name,
+//                 email: req.body.email,
+//                 contact: req.body.contact,
+//             }
+//         })
+//             .then((suppliers) => {
+//
+//                 if (suppliers.length) {
+//
+//                     res.locals.supplierExists = true;
+//
+//                     throw new CustomError({
+//                         description: `The supplier info entered already matches an existing one${JSON.stringify(suppliers[0].toJSON())}`,
+//                         status: 400,
+//                     }, `The supplier info entered already matches an existing one \n${suppliers[0].toJSON()}`);
+//
+//                 } else {
+//
+//                     res.locals.supplierExists = false;
+//                     next();
+//                 }
+//             })
+//             .catch(next);
+//
+//     } else {
+//
+//         next();
+//
+//     }
+// }
+
+// const supplierId = req.params.id;
+//
+// Supplier.findByPk(supplierId).then((supplier) => {
+//
+//     const {name, email, contact} = req.body;
+//
+//     if (!name || !email || !contact) {
+//         res.json({
+//             errMsg: "Error! Not all fields were filled",
+//             body: req.body,
+//         });
+//     } else {
+//         supplier.update({
+//             name, email, contact
+//         }).then((supplier) => {
+//             return supplier.save();
+//         }).then((supplier) => {
+//             res.json({
+//                 msg: "Successfully updated the supplier data",
+//                 supplier
+//             });
+//         }).catch((err) => {
+//             res.json({
+//                 errMsg: "Error! Failed to update the supplier's data",
+//                 err,
+//             });
+//         });
+//     }
+// }).catch((err) => {
+//     res.json({
+//         errMsg: "Error! Failed to update the supplier's data",
+//         err,
+//     });
+// });

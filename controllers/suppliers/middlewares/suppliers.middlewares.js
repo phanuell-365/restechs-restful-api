@@ -4,6 +4,7 @@
 
 const Supplier = require("../../../models/suppliers.model");
 const CustomError = require("../../../error/CustomError.error");
+const _ = require("lodash");
 
 class SuppliersMiddlewares {
 
@@ -18,70 +19,30 @@ class SuppliersMiddlewares {
                 const newSupplierObj = Object(req.body);
 
                 res.locals.undefinedAttributes = [];
+
                 res.locals.validSupplierValuesMap = new Map();
 
                 Object.entries(newSupplierObj).forEach(([key, value]) => {
 
-                    Promise.resolve().then(() => {
 
-                        if (value === undefined || value === null || !value) {
+                    if (value === undefined || value === null || !value) {
 
-                            console.error(`Undefined attribute -> ${key}`);
+                        console.error(`Undefined attribute -> ${key}`);
 
-                            res.locals.undefinedAttributes.push(key);
+                        res.locals.undefinedAttributes.push(key);
 
-                            throw new CustomError({
-                                description: `The value of ${key} is null`,
-                                status: 400,
-                            }, `The value of ${key} is null`);
-                        } else {
-                            res.locals.validSupplierValuesMap.set(key, value);
-                        }
+                        throw new CustomError({
+                            description: `The value of ${key} is null`,
+                            status: 400,
+                        }, `The value of ${key} is null`);
+                    } else {
 
-                    })
-                        .catch(next);
+                        res.locals.validSupplierValuesMap.set(key, value);
+                    }
+
                 });
                 next();
             })
-                .catch(next);
-
-        } else {
-
-            next();
-
-        }
-    }
-
-    static checkIfSupplierExists(req, res, next) {
-
-        if (res.req.method !== "GET") {
-
-            console.log("Checking if the supplier info inside the request body match a supplier that exists ...");
-
-            Supplier.findAll({
-                where: {
-                    name: req.body.name,
-                    email: req.body.email,
-                    contact: req.body.contact,
-                }
-            })
-                .then((suppliers) => {
-
-                    if (suppliers.length) {
-
-                        res.locals.supplierExists = true;
-
-                        throw new CustomError({
-                            description: `The supplier info entered already matches an existing one${JSON.stringify(suppliers[0].toJSON())}`,
-                            status: 400,
-                        }, `The supplier info entered already matches an existing one \n${suppliers[0].toJSON()}`);
-
-                    } else {
-
-                        res.locals.supplierExists = false;
-                        next();
-                    }
-                })
                 .catch(next);
 
         } else {
@@ -95,25 +56,26 @@ class SuppliersMiddlewares {
 
         if (res.req.method !== "GET") {
 
-            console.log("Checking if the supplier contact inside the request body matches another supplier's contact ...");
+            Promise.resolve().then(() => {
+                console.log("Checking if the supplier contact inside the request body matches another supplier's contact ...");
 
-            Supplier.findAll({
-                where: {
-                    contact: req.body.contact,
-                }
+                return Supplier.findAndCountAll({
+                    where: {
+                        contact: req.body.contact,
+                    }
+                });
+
+
             })
-                .then((suppliers) => {
-                    if (suppliers.length) {
+                .then(({count: length, rows: suppliers}) => {
 
-                        res.locals.supplierExists = true;
+                    if (length) {
 
                         throw new CustomError({
                             description: `The supplier contact entered already matches an existing one${JSON.stringify(suppliers[0].toJSON())}`,
                             status: 400,
                         }, `The supplier contact entered already matches an existing one \n${suppliers[0].toJSON()}`);
                     } else {
-
-                        res.locals.supplierExists = false;
 
                         next();
                     }
@@ -132,17 +94,19 @@ class SuppliersMiddlewares {
 
         if (res.req.method !== "GET") {
 
-            console.log("Checking if the supplier email inside the request body matches another supplier's email ...");
+            Promise.resolve()
+                .then(() => {
+                    console.log("Checking if the supplier email inside the request body matches another supplier's email ...");
 
-            Supplier.findAll({
-                where: {
-                    email: req.body.email,
-                }
-            })
-                .then((suppliers) => {
-                    if (suppliers.length) {
+                    return Supplier.findAndCountAll({
+                        where: {
+                            email: req.body.email,
+                        }
+                    });
 
-                        res.locals.supplierExists = true;
+                })
+                .then(({count: length, rows: suppliers}) => {
+                    if (length) {
 
                         throw new CustomError({
                             description: `The supplier email entered already matches an existing one${JSON.stringify(suppliers[0].toJSON())}`,
@@ -150,9 +114,8 @@ class SuppliersMiddlewares {
                         }, `The supplier email entered already matches an existing one \n${suppliers[0].toJSON()}`);
                     } else {
 
-                        res.locals.supplierExists = false;
-
                         next();
+
                     }
                 })
                 .catch(next);
@@ -168,19 +131,27 @@ class SuppliersMiddlewares {
 
         if (res.req.method !== "GET") {
 
-            console.log("Extracting valid supplier info ...");
+            Promise.resolve().then(() => {
 
-            console.log("The valid supplier values inside extractValidSupplierInfo ", res.locals.validSupplierValuesMap);
+                if (res.locals.validSupplierValuesMap) {
 
-            if (res.locals.validSupplierValuesMap) {
+                    console.log("Extracting valid supplier info ...");
 
-                res.locals.validSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
+                    console.log(res.locals.validSupplierValuesMap);
 
-                console.log("Creating a new valid object ...");
-                console.log("The new valid object ->", res.locals.validSupplierInfo);
-            }
+                    res.locals.validSupplierValuesMap.forEach((value, key) => {
 
-            next();
+                        res.locals.validSupplierValuesMap.set(key, _.capitalize(value));
+                    });
+
+                    res.locals.validSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
+
+                    console.log("Creating new valid supplier object ...");
+                    console.log("Valid supplier info: " + JSON.stringify(res.locals.validSupplierInfo));
+                }
+                next();
+            })
+                .catch(next);
 
         } else {
 

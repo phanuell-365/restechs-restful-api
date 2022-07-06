@@ -16,7 +16,7 @@ const port = process.env.PORT;
 const Drug = require("./models/drugs.model");
 const Supplier = require("./models/suppliers.model");
 const Order = require("./models/orders.model");
-const Delivery = require("./models/delivery.model");
+const Delivery = require("./models/deliveries.model");
 const Sale = require("./models/sales.model");
 
 // require routes

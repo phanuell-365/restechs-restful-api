@@ -18,8 +18,7 @@ module.exports = {
 
                 console.log(res.locals);
 
-                suppliers.forEach(supplier => console.log(supplier.toJSON()));
-
+                console.log("Displaying all suppliers ...");
                 res.status(200).json(suppliers);
 
             })
@@ -28,8 +27,8 @@ module.exports = {
 
     /**
      *
-     * @param req
-     * @param res
+     * @param req The request object
+     * @param res The response object
      * @param next
      */
     postSuppliers(req, res, next) {
@@ -38,7 +37,7 @@ module.exports = {
 
             const validSupplierInfo = res.locals.validSupplierInfo;
 
-            console.log(validSupplierInfo);
+            console.log("Valid supplier info to add into the database => ", validSupplierInfo);
 
             Supplier.findOrCreate({
                 where: {
@@ -49,11 +48,15 @@ module.exports = {
                 .then(([supplier, created]) => {
 
                     if (created) {
+
                         console.log("Successfully created the supplier ->", supplier.toJSON());
+
                         res.status(201).json({
                             description: "Successfully added the supplier into the database",
                         });
+
                     } else {
+
                         res.status(400).json({
                             description: "The supplier already exists.",
                         });
@@ -70,6 +73,11 @@ module.exports = {
         }
     },
 
+    /**
+     * @description Handles the post requests to the /drugs route
+     * @param req
+     * @param res
+     */
     deleteSuppliers(req, res) {
 
         Supplier.findAll().then((suppliers) => {

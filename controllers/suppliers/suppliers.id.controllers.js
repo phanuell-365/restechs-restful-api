@@ -3,91 +3,115 @@
 "use strict";
 
 const Supplier = require("../../models/suppliers.model");
+const CustomError = require("../../error/CustomError.error");
 
 module.exports = {
 
-    getSuppliersId(req, res) {
+    getSupplierById(req, res, next) {
+
         const supplierId = req.params.id;
 
-        Supplier.findByPk(supplierId).then((supplier) => {
-            res.json(supplier);
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error! Failed to get the supplier",
-                err,
-            });
-        });
+        Supplier.findByPk(supplierId)
+
+            .then((supplier) => {
+
+                res.status(200).json(supplier);
+
+            }).catch(next);
     },
 
-    putSuppliersId(req, res) {
+    putSupplierById(req, res, next) {
 
-        const supplierId = req.params.id;
+        Promise.resolve()
 
-        Supplier.findByPk(supplierId).then((supplier) => {
+            .then(() => {
 
-            const {name, email, contact} = req.body;
+                const supplierId = req.params.id;
 
-            if (!name || !email || !contact) {
-                res.json({
-                    errMsg: "Error! Not all fields were filled",
-                    body: req.body,
+                return Supplier.findByPk(supplierId);
+
+            })
+            .then((supplier) => {
+
+                if (res.locals.validSupplierInfo) {
+
+                    console.log("Previous supplier info -> ", supplier.toJSON());
+
+                    const validSupplierInfo = res.locals.validSupplierInfo;
+
+                    return supplier.update(validSupplierInfo);
+
+                } else {
+
+                    throw new CustomError({
+                        description: "The Server encountered an error while extracting valid supplier info!",
+                        status: 500,
+                    }, "The Server encountered an error while extracting valid supplier info!");
+
+                }
+
+            })
+            .then((supplier) => {
+
+                console.log("Successfully updated the supplier", supplier.toJSON());
+
+                res.status(200).json({
+                    description: "Successfully updated the supplier",
                 });
-            } else {
-                supplier.update({
-                    name, email, contact
-                }).then((supplier) => {
-                    return supplier.save();
-                }).then((supplier) => {
-                    res.json({
-                        msg: "Successfully updated the supplier data",
-                        supplier
-                    });
-                }).catch((err) => {
-                    res.json({
-                        errMsg: "Error! Failed to update the supplier's data",
-                        err,
-                    });
+
+            })
+            .catch(next);
+
+
+    },
+
+    patchSupplierById(req, res, next) {
+
+        Promise.resolve().then(() => {
+
+            const supplierId = req.params.id;
+
+            return Supplier.findByPk(supplierId);
+
+        })
+            .then((supplier) => {
+
+                console.log("Previous supplier info -> ", supplier.toJSON());
+
+                if (res.locals.validSupplierInfo) {
+
+                    const validSupplierInfo = res.locals.validSupplierInfo;
+
+                    return supplier.update(validSupplierInfo);
+                } else {
+
+                    throw new CustomError({
+                        description: "The Server encountered an error while extracting valid supplier info!",
+                        status: 500,
+                    }, "The Server encountered an error while extracting valid supplier info!");
+                }
+
+            })
+            .then((supplier) => {
+
+                console.log("Successfully updated the supplier", supplier.toJSON());
+
+                res.status(200).json({
+                    description: "Successfully updated the supplier",
                 });
-            }
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error! Failed to update the supplier's data",
-                err,
-            });
-        });
+
+            })
+            .catch(next);
     },
 
-    patchSuppliersId(req, res) {
-        const supplierId = req.params.id;
-
-        Supplier.findByPk(supplierId).then((supplier) => {
-            return supplier.update(req.body);
-        }).then((supplier) => {
-            return supplier;
-        }).then((supplier) => {
-            res.json({
-                msg: "Successfully updated the supplier's data",
-                supplier,
-            });
-        }).catch((err) => {
-            res.json({
-                errMsg: "Error! Failed to update the supplier's data",
-                err,
-            });
-        });
-    },
-
-    deleteSuppliersId(req, res) {
+    deleteSupplierById(req, res) {
 
         const supplierId = req.params.id;
 
-        Supplier.findByPk(supplierId).then((supplier) => {
-            return supplier.destroy();
-        }).then((supplier) => {
-            return supplier;
-        }).then((supplier) => {
-            return supplier;
-        }).then((supplier) => {
+        Supplier.findByPk(supplierId)
+            .then((supplier) => {
+                return supplier.destroy();
+            }).then((supplier) => {
             res.json({
                 msg: "Successfully deleted the supplier",
                 supplier,

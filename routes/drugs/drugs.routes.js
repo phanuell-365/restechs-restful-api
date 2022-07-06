@@ -10,13 +10,9 @@ const handlers = require("../../controllers/drugs/drugs.controllers");
 
 const CustomError = require("../../error/CustomError.error");
 
-// middlewares.checkIfDrugExists.apply(middlewares);
 router.use("/api/drugs", middlewares.checkIfQuantityAttrPassed);
 router.use("/api/drugs", middlewares.checkForUndefined);
-// router.use("/api/drugs", middlewares.checkIfDrugExists);
-// router.use("/api/drugs", middlewares.checkIfDrugExistsNearMatch);
 router.use("/api/drugs", middlewares.extractValidDrugInfo);
-//         router.use("/drugs",
 
 router.route("/api/drugs")
     .get(handlers.getDrugs)

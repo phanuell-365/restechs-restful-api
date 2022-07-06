@@ -20,49 +20,49 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
 
         if (req.method !== "GET" && req.method === "PUT") {
 
-            Promise.resolve().then(() => {
+            Promise.resolve()
+                .then(() => {
 
-                console.log("Checking if all the attributes are present");
+                    console.log("Checking if all the attributes are present");
 
-                const requestDrugAttributes = Object.keys(req.body).sort();
+                    const requestDrugAttributes = Object.keys(req.body).sort();
 
-                const drugAttrs = [...drugAttributes];
+                    const drugAttrs = [...drugAttributes];
 
-                requestDrugAttributes.forEach((requestDrugAttr) => {
+                    requestDrugAttributes.forEach((requestDrugAttr) => {
 
-                    const reqDrugIndex = drugAttrs.indexOf(requestDrugAttr);
+                        const reqDrugIndex = drugAttrs.indexOf(requestDrugAttr);
 
-                    drugAttrs.splice(reqDrugIndex, 1);
+                        drugAttrs.splice(reqDrugIndex, 1);
 
-                });
+                    });
 
-                console.log("The value of requestDrugAttributes -> ", requestDrugAttributes);
-                console.log("The value of drugAttrs -> ", drugAttrs);
+                    console.log("The value of requestDrugAttributes -> ", requestDrugAttributes);
+                    console.log("The value of drugAttrs -> ", drugAttrs);
 
-                if (drugAttrs.length) {
+                    if (drugAttrs.length) {
 
-                    throw new CustomError({
-                        description: "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed",
-                        status: 400,
-                    }, "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed");
-                }
+                        throw new CustomError({
+                            description: "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed",
+                            status: 400,
+                        }, "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed");
+                    }
 
-                next();
-            })
+                    next();
+                })
                 .catch(next);
         } else {
 
             next();
         }
 
-
     }
 
     /**
-     *
-     * @param req
-     * @param res
-     * @param next
+     * @desc Checks if the drug id passed in the request body is valid
+     * @param req The request body
+     * @param res   The response object
+     * @param next  Callback
      */
     static checkIfIdAttrPassed(req, res, next) {
 
@@ -103,12 +103,14 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
      * @throws CustomError
      * @param {Object} req The request body
      * @param {Object} res The response o
-     * @param {Function} next Callback
+     * @param {Function} next The next middleware
      */
     static checkForDuplicateDrugData(req, res, next) {
 
         if (req.method !== "GET") {
-            Promise.resolve().then(() => {
+            Promise.resolve()
+                .then(() => {
+
                 console.log('Validating if the passed drug details match one in the database ...');
 
                 const newDrugDetails = res.locals.validDrugInfo;
@@ -116,9 +118,11 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
                 if (req.method === "PATCH") {
 
                     return Drug.findByPk(req.params.id)
+
                         .then((drug) => {
 
                             return Drug.findAndCountAll({
+
                                 where: {
                                     name: newDrugDetails.name || drug.name,
                                     doseForm: newDrugDetails.doseForm || drug.doseForm,
@@ -128,6 +132,7 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
                             });
                         }).catch(next);
                 } else if (req.method === "PUT") {
+
                     return Drug.findAndCountAll({
                         where: {
                             name: newDrugDetails.name,

@@ -10,7 +10,6 @@ const middlewares = require("../../controllers/drugs/middlewares/drugs.id.middle
 const handlers = require("../../controllers/drugs/drugs.id.controllers");
 const CustomError = require("../../error/CustomError.error");
 
-router.use("/api/drugs/:id", middlewares.fetchDrugIds);
 router.use("/api/drugs/:id", middlewares.checkIfAllAttrArePresent);
 router.use("/api/drugs/:id", middlewares.checkIfQuantityAttrPassed);
 router.use("/api/drugs/:id", middlewares.checkIfIdAttrPassed);
