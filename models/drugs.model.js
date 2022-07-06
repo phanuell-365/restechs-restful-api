@@ -142,6 +142,10 @@ Drug
                 notNull: {
                     msg: "The drug's therapeutic category should not be null",
                 },
+                makeCapital (value){
+
+
+                }
                 // TODO: Add all the drug therapeutic categories
             }
         },

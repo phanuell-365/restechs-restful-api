@@ -17,25 +17,35 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
      */
     static checkIfAllAttrArePresent(req, res, next) {
 
-        if (req.method !== "GET" && (res.req.method === "PUT" || res.req.method === "PATCH")) {
+
+        if (req.method !== "GET" && req.method === "PUT") {
+
             Promise.resolve().then(() => {
 
-                let requestDrugAttributes = Object.keys(req.body).sort();
+                console.log("Checking if all the attributes are present");
 
-                let cacheDrugAttributes = [];
+                const requestDrugAttributes = Object.keys(req.body).sort();
 
-                console.log("The request drug attributes -> ", requestDrugAttributes);
-                console.log("The valid drug attributes -> ", drugAttributes.sort());
+                const drugAttrs = [...drugAttributes];
 
-                drugAttributes.sort();
-                drugAttributes.forEach(async (drugAttribute) => {
+                requestDrugAttributes.forEach((requestDrugAttr) => {
 
-                    requestDrugAttributes = requestDrugAttributes.filter((requestDrugAttribute) => drugAttribute === requestDrugAttribute);
+                    const reqDrugIndex = drugAttrs.indexOf(requestDrugAttr);
+
+                    drugAttrs.splice(reqDrugIndex, 1);
 
                 });
 
-                console.log("Final value of cacheDrugAttributes -> ", cacheDrugAttributes);
-                console.log("Final value of requestDrugAttributes -> ", requestDrugAttributes);
+                console.log("The value of requestDrugAttributes -> ", requestDrugAttributes);
+                console.log("The value of drugAttrs -> ", drugAttrs);
+
+                if (drugAttrs.length) {
+
+                    throw new CustomError({
+                        description: "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed",
+                        status: 400,
+                    }, "Error!! Failed to update the drug. The attributes " + drugAttrs + " haven't be passed");
+                }
 
                 next();
             })
@@ -97,20 +107,37 @@ class DrugsIdMiddlewares extends DrugMiddlewares {
      */
     static checkForDuplicateDrugData(req, res, next) {
 
-        if (req.method !== "GET"){
+        if (req.method !== "GET") {
             Promise.resolve().then(() => {
                 console.log('Validating if the passed drug details match one in the database ...');
 
                 const newDrugDetails = res.locals.validDrugInfo;
 
-                return Drug.findAndCountAll({
-                    where: {
-                        name: newDrugDetails.name,
-                        doseForm: newDrugDetails.doseForm,
-                        strength: newDrugDetails.strength,
-                        levelOfUse: newDrugDetails.levelOfUse,
-                    }
-                });
+                if (req.method === "PATCH") {
+
+                    return Drug.findByPk(req.params.id)
+                        .then((drug) => {
+
+                            return Drug.findAndCountAll({
+                                where: {
+                                    name: newDrugDetails.name || drug.name,
+                                    doseForm: newDrugDetails.doseForm || drug.doseForm,
+                                    strength: newDrugDetails.strength || drug.strength,
+                                    levelOfUse: newDrugDetails.levelOfUse || drug.levelOfUse,
+                                },
+                            });
+                        }).catch(next);
+                } else if (req.method === "PUT") {
+                    return Drug.findAndCountAll({
+                        where: {
+                            name: newDrugDetails.name,
+                            doseForm: newDrugDetails.doseForm,
+                            strength: newDrugDetails.strength,
+                            levelOfUse: newDrugDetails.levelOfUse,
+                        }
+                    });
+                }
+
             })
                 .then(({count: length, rows: drugs}) => {
 

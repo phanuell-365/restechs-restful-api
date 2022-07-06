@@ -4,7 +4,7 @@
 
 const Drug = require("../../../models/drugs.model");
 const CustomError = require("../../../error/CustomError.error");
-const sources = require("../../../src/drugs/drugs.src");
+const _ = require("lodash");
 
 class DrugMiddlewares {
 
@@ -87,6 +87,16 @@ class DrugMiddlewares {
                     // console.log("The value of valid drug value map ", res.locals.validDrugValuesMap);
                     console.log(res.locals.validDrugValuesMap);
 
+                    // capitalize each attribute value
+                    res.locals.validDrugValuesMap.forEach((value, key) => {
+                        if (key === "issueUnit"){
+
+                            res.locals.validDrugValuesMap.set(key, (value));
+                        } else {
+                            res.locals.validDrugValuesMap.set(key, _.capitalize(value));
+                        }
+                    });
+
                     res.locals.validDrugInfo = Object.fromEntries(res.locals.validDrugValuesMap.entries());
 
                     console.log("Creating a new valid object ...");
@@ -103,16 +113,11 @@ class DrugMiddlewares {
     }
 
 
-
     static fetchDrugIds(req, res, next) {
 
         return Drug.findAll()
 
             .then((allDrugs) => {
-
-                // sources.getDrugAttribute(allDrugs[0].id, "name").then((val) => {
-                //
-                // });
 
                 res.locals.drugIds = [];
 
@@ -167,11 +172,6 @@ class DrugMiddlewares {
                 if (drugs.length) {
 
                     res.locals.drugExists = true;
-                    //
-                    // throw new CustomError({
-                    //     description: `The drug info entered already matches an existing one${JSON.stringify(drugs[0].toJSON())}`,
-                    //     status: 400,
-                    // }, `The drug info entered already matches an existing one \n${drugs[0].toJSON()}`);
 
                 } else {
 

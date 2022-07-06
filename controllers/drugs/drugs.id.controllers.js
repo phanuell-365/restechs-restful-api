@@ -3,7 +3,7 @@
 "use strict";
 
 const Drug = require("../../models/drugs.model");
-const sources = require("../../src/drugs/drugs.src");
+const CustomError = require("../../error/CustomError.error");
 
 module.exports = {
 
@@ -26,123 +26,86 @@ module.exports = {
 
     putDrugById(req, res, next) {
 
-        const drugId = req.params.id;
+        Promise.resolve()
 
-        if (res.locals.validDrugInfo) {
+            .then(() => {
 
-            const validDrugInfo = res.locals.validDrugInfo;
+                const drugId = req.params.id;
 
-            Drug.findByPk(drugId)
+                return Drug.findByPk(drugId);
 
-                .then((drug) => {
+            })
+            .then((drug) => {
+
+                if (res.locals.validDrugInfo) {
 
                     console.log("Previous drug info -> ", drug.toJSON());
 
+                    const validDrugInfo = res.locals.validDrugInfo;
+
                     return drug.update(validDrugInfo);
 
-                })
-                .then((drug) => {
+                } else {
 
-                    console.log("Successfully updated the drug", drug.toJSON());
+                    throw new CustomError({
+                        description: "The Server encountered an error while extracting valid drug info!",
+                        status: 500,
+                    }, "The Server encountered an error while extracting valid drug info!");
 
-                    res.status(200).json({
-                        description: `Successfully updated the drug ${drug.toJSON()}`,
-                    });
-                })
+                }
 
-                .catch(next);
+            })
+            .then((drug) => {
 
-        } else {
+                console.log("Successfully updated the drug", drug.toJSON());
 
-            res.status(500).json({
-                description: "The Server encountered an error while extracting valid drug info!",
-            });
-        }
+                res.status(200).json({
+                    description: `Successfully updated the drug ${drug.toJSON()}`,
+                });
+            })
+
+            .catch(next);
 
     },
 
-    async patchDrugsId(req, res) {
+    patchDrugsId(req, res, next) {
 
-        const DrugId = req.params.id;
-        const drugContent = req.body;
+        Promise.resolve().then(() => {
 
+            const DrugId = req.params.id;
 
-        const drug = await Drug.findByPk(DrugId);
+            return Drug.findByPk(DrugId);
 
-        // cache the result of trapping the quantity attribute
+        })
+            .then((drug) => {
 
-        const trapQuantityResult = sources.trapQuantityAttribute(req.body);
+                console.log("Previous drug info -> ", drug.toJSON());
 
-        if (!trapQuantityResult.flagStatus) {
-            res.status(trapQuantityResult.status).json(trapQuantityResult);
-        }
+                if (res.locals.validDrugInfo) {
 
-        // check if  the dose form or the issue unit was edited
-        if (req.body.doseForm) {
+                    const validDrugInfo = res.locals.validDrugInfo;
 
-            if (!req.body.issueUnit) {
+                    return drug.update(validDrugInfo);
+                } else {
 
-                const validateResponse = Drug.validateDoseFormAndIssueUnit(req.body.doseForm, drug.issueUnit);
-                validateResponse.description = "Error! The updated dose form doesn't match the issue unit";
-                return validateResponse;
-            }
-        } else if (req.body.issueUnit) {
+                    throw new CustomError({
+                        description: "The Server encountered an error while extracting valid drug info!",
+                        status: 500,
+                    }, "The Server encountered an error while extracting valid drug info!");
 
-            if (!req.body.doseForm) {
+                }
 
-                const validateResponse = Drug.validateDoseFormAndIssueUnit(drug.doseForm, drug.issueUnit);
-                validateResponse.description = "Error! The updated issue unit doesn't match the dose form";
-                return validateResponse;
-            }
-        } else {
+            })
+            .then((drug) => {
 
-            // cache the result of validating the dose form and the issue unit
+                console.log("Successfully updated the drug -> ", drug.toJSON());
 
-            const validateDoseFrmIssUnitRes = Drug.validateDoseFormAndIssueUnit(req.body.doseForm, req.body.issueUnit);
+                res.status(200).json({
+                    description: "Successfully updated the drug " + drug.toJSON(),
+                });
+            })
+            .catch(next);
 
-            if (!validateDoseFrmIssUnitRes.flagStatus) {
-
-                res.status(validateDoseFrmIssUnitRes.status).json(validateDoseFrmIssUnitRes);
-
-            }
-        }
-
-        if (req.body.levelOfUse) {
-
-            const validateLOU = Drug.validateLevelOfUse(req.body.levelOfUse);
-
-            if (!validateLOU.flagStatus) {
-                res.status(validateLOU.status).json(validateLOU);
-            }
-        }
-
-        if (req.body.issueUnitPrice) {
-
-            const validateIssUnitPriceRes = Drug.validateIssueUnitPrice(req.body.issueUnitPrice);
-
-            if (!validateIssUnitPriceRes.flagStatus) {
-                res.status(validateIssUnitPriceRes.status).json(validateIssUnitPriceRes);
-            }
-        }
-
-        try {
-            await drug.update(drugContent);
-
-            res.status(200).json({
-                description: "Successfully updated the drug data in the database",
-                flagStatus: true,
-                status: 200,
-            });
-
-        } catch (err) {
-            console.error(err);
-
-            res.status(500).json({
-                description: "Error! The server failed to update the drug data.",
-                flagStatus: false,
-                status: 500,
-            });
-        }
     },
 
 

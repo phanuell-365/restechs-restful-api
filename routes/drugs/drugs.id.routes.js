@@ -16,9 +16,7 @@ router.use("/api/drugs/:id", middlewares.checkIfQuantityAttrPassed);
 router.use("/api/drugs/:id", middlewares.checkIfIdAttrPassed);
 router.use("/api/drugs/:id", middlewares.checkForUndefined);
 router.use("/api/drugs/:id", middlewares.extractValidDrugInfo);
-// router.use("/api/drugs/:id", middlewares.checkForDuplicateDrugData);
 router.use("/api/drugs/:id", middlewares.checkForDuplicateDrugData);
-// router.use("/api/drugs/:id", middlewares.checkIfUpdatedDrugInfoMatchesExistent);
 
 router.route("/api/drugs/:id")
     .get(handlers.getDrugById)
