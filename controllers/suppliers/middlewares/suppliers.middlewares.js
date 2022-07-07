@@ -5,44 +5,93 @@
 const Supplier = require("../../../models/suppliers.model");
 const CustomError = require("../../../error/CustomError.error");
 const _ = require("lodash");
+const {MyArray} = require("../../../src/suppliers/suppliers.src");
+const {supplierAttributes} = require("../../../data/suppliers/suppliers.data");
 
 class SuppliersMiddlewares {
+
+    static checkIfAllSupplierAttributesArePresent(req, res, next) {
+
+        if (res.req.method !== "GET") {
+
+            Promise.resolve()
+
+                .then(() => {
+
+                    const reqBody = Object(req.body);
+
+                    supplierAttributes.forEach(attribute => {
+
+                            if (!reqBody[attribute]) {
+
+                                throw new CustomError({
+                                    description: `The attribute ${attribute} is missing`,
+                                    status: 400,
+                                }, `The attribute ${attribute} is missing`);
+                            }
+                    });
+
+                    next();
+
+                })
+
+                .catch(next);
+
+        } else {
+
+            next();
+
+        }
+    }
 
     static checkForUndefined(req, res, next) {
 
         if (res.req.method !== "GET") {
 
-            Promise.resolve().then(() => {
+            Promise.resolve()
 
-                console.log("Checking for undefined values in the request body ...");
+                .then(() => {
 
-                const newSupplierObj = Object(req.body);
+                    console.log("Checking for undefined values in the request body ...");
 
-                res.locals.undefinedAttributes = [];
-
-                res.locals.validSupplierValuesMap = new Map();
-
-                Object.entries(newSupplierObj).forEach(([key, value]) => {
-
-
-                    if (value === undefined || value === null || !value) {
-
-                        console.error(`Undefined attribute -> ${key}`);
-
-                        res.locals.undefinedAttributes.push(key);
+                    if (_.isEmpty(req.body)) {
 
                         throw new CustomError({
-                            description: `The value of ${key} is null`,
+                            description: "The request body is empty",
                             status: 400,
-                        }, `The value of ${key} is null`);
-                    } else {
+                        }, "The request body is empty");
 
-                        res.locals.validSupplierValuesMap.set(key, value);
                     }
 
-                });
-                next();
-            })
+                    const newSupplierObj = Object(req.body);
+
+                    console.log("The value of new suppliers object -> ", newSupplierObj);
+
+                    res.locals.undefinedAttributes = [];
+
+                    res.locals.validSupplierValuesMap = new Map();
+
+                    Object.entries(newSupplierObj).forEach(([key, value]) => {
+
+                        if (typeof value === undefined) {
+
+                            console.error(`Undefined attribute -> ${key}`);
+
+                            res.locals.undefinedAttributes.push(key);
+
+                            throw new CustomError({
+                                description: `The value of ${key} is null`,
+                                status: 400,
+                            }, `The value of ${key} is null`);
+                        } else {
+
+                            res.locals.validSupplierValuesMap.set(key, value);
+
+                        }
+
+                    });
+                    next();
+                })
                 .catch(next);
 
         } else {
@@ -56,17 +105,23 @@ class SuppliersMiddlewares {
 
         if (res.req.method !== "GET") {
 
-            Promise.resolve().then(() => {
-                console.log("Checking if the supplier contact inside the request body matches another supplier's contact ...");
+            Promise.resolve()
+                .then(() => {
 
-                return Supplier.findAndCountAll({
-                    where: {
-                        contact: req.body.contact,
-                    }
-                });
+                    const validatedSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
+
+                    console.log("The value validated supplier info -> ", validatedSupplierInfo);
+
+                    console.log("Checking if the supplier contact inside the request body matches another supplier's contact ...");
+
+                    return Supplier.findAndCountAll({
+                        where: {
+                            contact: validatedSupplierInfo.contact,
+                        }
+                    });
 
 
-            })
+                })
                 .then(({count: length, rows: suppliers}) => {
 
                     if (length) {
@@ -95,12 +150,16 @@ class SuppliersMiddlewares {
         if (res.req.method !== "GET") {
 
             Promise.resolve()
+
                 .then(() => {
+
+                    const validatedSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
+
                     console.log("Checking if the supplier email inside the request body matches another supplier's email ...");
 
                     return Supplier.findAndCountAll({
                         where: {
-                            email: req.body.email,
+                            email: validatedSupplierInfo.email,
                         }
                     });
 
@@ -131,26 +190,44 @@ class SuppliersMiddlewares {
 
         if (res.req.method !== "GET") {
 
-            Promise.resolve().then(() => {
+            Promise.resolve()
 
-                if (res.locals.validSupplierValuesMap) {
-
+                .then(() => {
                     console.log("Extracting valid supplier info ...");
 
-                    console.log(res.locals.validSupplierValuesMap);
+                    const validatedSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
 
-                    res.locals.validSupplierValuesMap.forEach((value, key) => {
+                    console.log("The value validated supplier info -> ", validatedSupplierInfo);
 
-                        res.locals.validSupplierValuesMap.set(key, _.capitalize(value));
-                    });
+                    if (res.locals.validSupplierValuesMap) {
 
-                    res.locals.validSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
 
-                    console.log("Creating new valid supplier object ...");
-                    console.log("Valid supplier info: " + JSON.stringify(res.locals.validSupplierInfo));
-                }
-                next();
-            })
+                        console.log(res.locals.validSupplierValuesMap);
+
+                        res.locals.validSupplierValuesMap.forEach((value, key) => {
+
+                            if (key === "email") {
+
+                                res.locals.validSupplierValuesMap.set(key, value.toLowerCase());
+
+                            } else {
+
+                                res.locals.validSupplierValuesMap.set(key, value);
+
+                            }
+                            // res.locals.validSupplierValuesMap.set(key, _.capitalize(value));
+                        });
+
+                        res.locals.validatedSupplierInfo = Object.fromEntries(res.locals.validSupplierValuesMap.entries());
+
+                        console.log("The value of validated supplier info -> ", res.locals.validatedSupplierInfo);
+
+                    }
+
+                    next();
+
+                })
+
                 .catch(next);
 
         } else {

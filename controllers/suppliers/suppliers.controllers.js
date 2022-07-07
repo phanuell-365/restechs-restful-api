@@ -3,6 +3,7 @@
 "use strict";
 
 const Supplier = require("../../models/suppliers.model");
+const CustomError = require("../../error/CustomError.error");
 
 module.exports = {
 
@@ -33,44 +34,60 @@ module.exports = {
      */
     postSuppliers(req, res, next) {
 
-        if (res.locals.validSupplierInfo) {
+        Promise.resolve()
 
-            const validSupplierInfo = res.locals.validSupplierInfo;
+            .then(() => {
 
-            console.log("Valid supplier info to add into the database => ", validSupplierInfo);
+                if (res.locals.validatedSupplierInfo) {
 
-            Supplier.findOrCreate({
-                where: {
-                    name: req.body.name,
-                },
-                defaults:validSupplierInfo,
+                    const validSupplierInfo = {...res.locals.validatedSupplierInfo};
+
+                    console.log("Valid supplier info to add into the database => ", validSupplierInfo);
+
+                    return Supplier.findOrCreate({
+                        where: {
+                            name: validSupplierInfo.name,
+                        },
+                        defaults: {
+                            name: validSupplierInfo.name,
+                            email : validSupplierInfo.email,
+                            contact : validSupplierInfo.contact,
+                        },
+                    });
+
+                } else {
+
+                    throw new CustomError({
+                        description: "The Server encountered an error while extracting valid supplier info!",
+                        status: 500,
+                    }, "The Server encountered an error while extracting valid supplier info!");
+                }
+
+
             })
-                .then(([supplier, created]) => {
 
-                    if (created) {
+            .then(([supplier, created]) => {
 
-                        console.log("Successfully created the supplier ->", supplier.toJSON());
+            if (created) {
 
-                        res.status(201).json({
-                            description: "Successfully added the supplier into the database",
-                        });
+                console.log("Successfully created the supplier ->", supplier.toJSON());
 
-                    } else {
+                res.status(201).json({
+                    description: "Successfully added the supplier into the database",
+                });
 
-                        res.status(400).json({
-                            description: "The supplier already exists.",
-                        });
-                    }
+            } else {
 
-                })
-                .catch(next);
+                throw new CustomError({
+                    description: "The Supplier already exists in the database!",
+                    status: 400,
+                }, "The Supplier already exists in the database!");
+            }
 
-        } else {
+        })
+            .catch(next);
 
-            res.status(500).json({
-                description: "The Server encountered an error while extracting valid supplier info!"
-            });
-        }
+
     },
 
     /**
